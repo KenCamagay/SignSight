@@ -135,9 +135,11 @@ function projectLandmarkToPreview(
   frameHeight: number,
   cameraPosition: "back" | "front"
 ) {
-  const normalizedX = cameraPosition === "front" ? 1 - point.x : point.x;
-  const frameX = normalizedX * frameWidth;
-  const frameY = point.y * frameHeight;
+  const normalizedX =
+    cameraPosition === "front" ? 1 - point.x : point.x;
+
+    const frameX = normalizedX * frameWidth;
+    const frameY = point.y * frameHeight;
   const scale = Math.max(previewWidth / frameWidth, previewHeight / frameHeight);
   const scaledWidth = frameWidth * scale;
   const scaledHeight = frameHeight * scale;

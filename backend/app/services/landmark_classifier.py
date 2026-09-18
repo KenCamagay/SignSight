@@ -94,6 +94,14 @@ def _normalize_camera_position(value: object) -> Optional[str]:
         return lowered
     return None
 
+def _normalize_platform(value: object) -> Optional[str]:
+    text = _clean_optional_string(value)
+    if not text:
+        return None
+    lowered = text.lower()
+    if lowered in {"ios", "android"}:
+        return lowered
+    return None
 
 def _normalize_review_status(value: object) -> str:
     text = _clean_optional_string(value)
@@ -132,6 +140,7 @@ def _normalize_landmark_record(raw: dict) -> dict:
         "signer_id": _clean_optional_string(raw.get("signer_id")),
         "capture_session_id": _clean_optional_string(raw.get("capture_session_id")),
         "device_id": _clean_optional_string(raw.get("device_id")),
+        "platform": _normalize_platform(raw.get("platform")),
         "camera_position": _normalize_camera_position(raw.get("camera_position")),
         "accepted": accepted,
         "review_status": review_status,
@@ -1338,6 +1347,16 @@ def predict_landmarks(
         margin=margin,
         active_static_letters=active_static_letters,
     )
+    print(
+        "[LANDMARK PREDICT]",
+        f"label={label}",
+        f"confidence={confidence:.3f}",
+        f"margin={margin:.3f}",
+        f"accepted={accepted_prediction}",
+        f"reason={unknown_reason}",
+        f"top={[(str(l), round(float(s), 3)) for l, s in zip(top_labels[:3], top_scores[:3])]}",
+        flush=True,
+    )
     return {
         "label": label,
         "confidence": confidence,
@@ -1358,6 +1377,7 @@ def upload_landmarks(
     signer_id: Optional[str] = None,
     capture_session_id: Optional[str] = None,
     device_id: Optional[str] = None,
+    platform: Optional[str] = None,
     camera_position: Optional[str] = None,
     accepted: Optional[bool] = None,
     review_status: Optional[str] = None,
@@ -1393,6 +1413,7 @@ def upload_landmarks(
             "signer_id": signer_id,
             "capture_session_id": capture_session_id,
             "device_id": device_id,
+            "platform": platform,
             "camera_position": camera_position,
             "accepted": accepted,
             "review_status": review_status,
@@ -1434,6 +1455,7 @@ def upload_static_word_landmark(
     signer_id: Optional[str] = None,
     capture_session_id: Optional[str] = None,
     device_id: Optional[str] = None,
+    platform: Optional[str] = None,
     camera_position: Optional[str] = None,
     accepted: Optional[bool] = None,
     review_status: Optional[str] = None,
@@ -1460,6 +1482,7 @@ def upload_static_word_landmark(
             "signer_id": signer_id,
             "capture_session_id": capture_session_id,
             "device_id": device_id,
+            "platform": platform,
             "camera_position": camera_position,
             "accepted": accepted,
             "review_status": review_status,

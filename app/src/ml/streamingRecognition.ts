@@ -1,4 +1,5 @@
 import type { MutableRefObject } from "react";
+import { Platform } from "react-native";
 
 import { MajorityVoteSmoother } from "./smoother";
 import type {
@@ -146,6 +147,7 @@ export async function saveStreamingLandmarkSample(
       signer_id: metadata.signerId,
       capture_session_id: metadata.captureSessionId,
       device_id: metadata.deviceId ?? null,
+      platform: Platform.OS,
       camera_position: metadata.cameraPosition,
       accepted: true,
       review_status: "approved",
@@ -193,6 +195,7 @@ export async function saveStreamingStaticWordLandmarkSample(
       signer_id: metadata.signerId,
       capture_session_id: metadata.captureSessionId,
       device_id: metadata.deviceId ?? null,
+      platform: Platform.OS,
       camera_position: metadata.cameraPosition,
       accepted: true,
       review_status: "approved",
@@ -252,6 +255,7 @@ export async function saveStreamingGestureSample(
       signer_id: payload.signerId,
       capture_session_id: payload.captureSessionId,
       device_id: payload.deviceId ?? null,
+      platform: Platform.OS,
       camera_position: payload.cameraPosition,
       accepted: true,
       review_status: "approved",

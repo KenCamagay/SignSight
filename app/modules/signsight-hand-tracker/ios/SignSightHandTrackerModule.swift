@@ -9,7 +9,15 @@ public class SignSightHandTrackerModule: Module {
     }
 
     Function("isSupported") {
-      false
+      true
+    }
+
+    Function("getTrackingCapabilities") {
+      [
+        "hands": true,
+        "upperBody": true,
+        "gestureV2": false
+      ]
     }
   }
 }

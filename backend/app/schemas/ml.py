@@ -44,6 +44,7 @@ class UploadLandmarksReq(BaseModel):
     signer_id: Optional[str] = None
     capture_session_id: Optional[str] = None
     device_id: Optional[str] = None
+    platform: Optional[Literal["ios", "android"]] = None
     camera_position: Optional[Literal["front", "back"]] = None
     accepted: Optional[bool] = None
     review_status: Optional[Literal["pending", "approved", "rejected"]] = None
@@ -97,6 +98,7 @@ class UploadGestureReq(BaseModel):
     signer_id: Optional[str] = None
     capture_session_id: Optional[str] = None
     device_id: Optional[str] = None
+    platform: Optional[Literal["ios", "android"]] = None
     camera_position: Optional[Literal["front", "back"]] = None
     accepted: Optional[bool] = None
     review_status: Optional[Literal["pending", "approved", "rejected"]] = None

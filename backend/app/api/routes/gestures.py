@@ -22,6 +22,7 @@ def upload_gesture_route(req: UploadGestureReq):
         signer_id=req.signer_id,
         capture_session_id=req.capture_session_id,
         device_id=req.device_id,
+        platform=req.platform,
         camera_position=req.camera_position,
         accepted=req.accepted,
         review_status=req.review_status,
