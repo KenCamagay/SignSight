@@ -1,3 +1,101 @@
+"use client";
+
+import { useEffect, useRef, useState, type MouseEvent } from "react";
+
+type Demo = {
+  id: string;
+  label: string;
+  result: string;
+  mode: string;
+  helper: string;
+};
+
+const demos: Demo[] = [
+  {
+    id: "a",
+    label: "A",
+    result: "A",
+    mode: "Letter Mode",
+    helper: "Single-letter recognition",
+  },
+  {
+    id: "hello",
+    label: "HELLO",
+    result: "Hello",
+    mode: "Word Mode",
+    helper: "Live word translation",
+  },
+  {
+    id: "thanks",
+    label: "THANKS",
+    result: "Thank you",
+    mode: "Word Mode",
+    helper: "Live word translation",
+  },
+];
+
+const featureCards = [
+  {
+    number: "01",
+    icon: "/icons/feature-translate.png",
+    title: "Live Translation",
+    desc: "Point the camera at a supported FSL sign and see the detected letter or word on screen.",
+  },
+  {
+    number: "02",
+    icon: "/icons/feature-landmark.png",
+    title: "Hand Landmark Tracking",
+    desc: "Tracks hand landmarks in real time to support fast on-device gesture recognition.",
+  },
+  {
+    number: "03",
+    icon: "/icons/feature-tutorial.png",
+    title: "FSL Fingerspelling Tutorial",
+    desc: "Learn and review FSL fingerspelling through a focused tutorial inside the app.",
+  },
+  {
+    number: "04",
+    icon: "/icons/feature-tips.png",
+    title: "Recognition Tips",
+    desc: "Simple guidance for hand placement, framing, and lighting before you start translating.",
+  },
+];
+
+const heroChapters = [
+  {
+    number: "01",
+    label: "Ready",
+    short: "Frame the sign",
+    status: "READY",
+  },
+  {
+    number: "02",
+    label: "Tracking",
+    short: "Find hand landmarks",
+    status: "TRACKING",
+  },
+  {
+    number: "03",
+    label: "Detecting",
+    short: "Analyze the gesture",
+    status: "SCANNING",
+  },
+  {
+    number: "04",
+    label: "Translated",
+    short: "Show the result",
+    status: "DETECTED",
+  },
+] as const;
+
+const landmarkPoints = [
+  [50, 73], [43, 63], [38, 52], [34, 41], [31, 31],
+  [48, 57], [47, 43], [46, 31], [46, 21],
+  [57, 56], [59, 41], [60, 29], [61, 20],
+  [66, 61], [70, 50], [73, 41], [76, 34],
+  [69, 70], [78, 66], [84, 61], [89, 56],
+] as const;
+
 function IconImg({
   src,
   alt,
@@ -10,435 +108,766 @@ function IconImg({
   return <img src={src} alt={alt} className={className} />;
 }
 
-export default function LandingPage() {
-  const featureCards = [
-    {
-      icon: "/icons/feature-translate.png",
-      title: "Real-time Translation",
-      desc: "Instant conversion of ASL signs into clear text and speech output on your device screen.",
-    },
-    {
-      icon: "/icons/feature-landmark.png",
-      title: "Landmark Detection",
-      desc: "Precise tracking of 21 individual hand points for high-fidelity gesture recognition.",
-    },
-    {
-      icon: "/icons/feature-tutorial.png",
-      title: "Alphabet Tutorial",
-      desc: "Comprehensive modules for learning ASL finger spelling from basics to advanced levels.",
-    },
-    {
-      icon: "/icons/feature-tips.png",
-      title: "Accuracy Tips",
-      desc: "Smart suggestions on lighting and positioning to ensure the best possible recognition rate.",
-    },
-  ];
+function ArrowUpRight() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M7 17 17 7" />
+      <path d="M8 7h9v9" />
+    </svg>
+  );
+}
 
-  const steps = [
-    {
-      icon: "/icons/step-camera.png",
-      title: "1. Open Camera",
-      desc: "Launch the SignSight app and grant camera permissions to start detecting.",
-    },
-    {
-      icon: "/icons/step-hand.png",
-      title: "2. Show Sign",
-      desc: "Position your hand clearly within the camera frame for the AI to track.",
-    },
-    {
-      icon: "/icons/step-detect.png",
-      title: "3. App Detects",
-      desc: "Our neural network processes the landmarks and shows the text instantly.",
-    },
-  ];
+function ChevronDown() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
 
-  const footerCols = [
-    {
-      title: "Product",
-      links: ["Features", "Download", "Release Notes"],
-    },
-    {
-      title: "Resources",
-      links: ["ASL Basics", "Tutorials", "Accuracy Tips"],
-    },
-    {
-      title: "Legal",
-      links: ["Privacy Policy", "Terms of Service", "GitHub Repo"],
-    },
-  ];
+export default function SignSightDownloadPage() {
+  const [activeDemo, setActiveDemo] = useState<Demo>(demos[1]);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [trackingPoint, setTrackingPoint] = useState({ x: 50, y: 50 });
+  const [detectionBurst, setDetectionBurst] = useState(0);
+  const [heroScroll, setHeroScroll] = useState(0);
+  const [autoDemo, setAutoDemo] = useState(false);
+  const heroRef = useRef<HTMLElement | null>(null);
+
+  // Keep the final translated state close to the end of the sticky hero so
+  // there is no long “finished but still scrolling” dead zone.
+  const heroChapterIndex =
+    heroScroll < 0.25 ? 0 :
+    heroScroll < 0.50 ? 1 :
+    heroScroll < 0.75 ? 2 : 3;
+  const heroChapter = heroChapters[heroChapterIndex];
+
+  useEffect(() => {
+    let frame = 0;
+
+    const clamp = (value: number) => Math.min(1, Math.max(0, value));
+
+    const updateScrollScene = () => {
+      frame = 0;
+      const viewportHeight = window.innerHeight || 1;
+
+      if (heroRef.current) {
+        const rect = heroRef.current.getBoundingClientRect();
+        const travel = Math.max(rect.height - viewportHeight, 1);
+        setHeroScroll(clamp(-rect.top / travel));
+      }
+    };
+
+    const requestUpdate = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(updateScrollScene);
+    };
+
+    updateScrollScene();
+    window.addEventListener("scroll", requestUpdate, { passive: true });
+    window.addEventListener("resize", requestUpdate);
+
+    return () => {
+      window.removeEventListener("scroll", requestUpdate);
+      window.removeEventListener("resize", requestUpdate);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!autoDemo) return;
+
+    const timer = window.setInterval(() => {
+      setActiveDemo((current) => {
+        const currentIndex = demos.findIndex((demo) => demo.id === current.id);
+        return demos[(currentIndex + 1) % demos.length];
+      });
+      setDetectionBurst((value) => value + 1);
+    }, 2200);
+
+    return () => window.clearInterval(timer);
+  }, [autoDemo]);
+
+
+  const jumpToHeroChapter = (index: number) => {
+    const section = heroRef.current;
+    if (!section) return;
+    const travel = Math.max(section.offsetHeight - window.innerHeight, 1);
+    const chapterStops = [0.02, 0.28, 0.54, 0.80];
+    const targetProgress = chapterStops[Math.max(0, Math.min(3, index))];
+    window.scrollTo({
+      top: section.offsetTop + travel * targetProgress,
+      behavior: "smooth",
+    });
+  };
+
+  const handleTrackingMove = (event: MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    setTrackingPoint({ x, y });
+  };
+
+  const triggerDetection = () => {
+    const currentIndex = demos.findIndex((demo) => demo.id === activeDemo.id);
+    setActiveDemo(demos[(currentIndex + 1) % demos.length]);
+    setDetectionBurst((value) => value + 1);
+  };
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-[#f8f7f6] font-display text-slate-900 antialiased">
-      <header className="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e66e19]/10 bg-[#f8f7f6]/80 px-6 py-4 backdrop-blur-md md:px-20 lg:px-40">
-        <div className="flex items-center gap-2 text-[#e66e19]">
-          <IconImg
-            src="/icons/logo.png"
-            alt="SignSight logo"
-            className="h-7 w-7 object-contain"
-          />
-          <h2 className="text-xl font-black leading-tight tracking-tight text-slate-900 dark:text-slate-100">
-            SignSight
-          </h2>
+    <div className="min-h-screen overflow-x-hidden bg-[#FFFAF6] text-[#202124] selection:bg-[#F67A16]/[0.08] selection:text-[#202124]">
+      <style jsx global>{`
+        @keyframes signsight-float {
+          0%, 100% { transform: translateY(0px) rotate(-1.5deg); }
+          50% { transform: translateY(-12px) rotate(1deg); }
+        }
+        @keyframes signsight-scan {
+          0% { transform: translateY(-140%); opacity: 0; }
+          15% { opacity: 1; }
+          85% { opacity: 1; }
+          100% { transform: translateY(640%); opacity: 0; }
+        }
+        @keyframes signsight-pop {
+          0% { transform: translate(-50%, -50%) scale(.35); opacity: .95; }
+          100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+        }
+        @keyframes signsight-ticker {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
+        }
+        @keyframes signsight-landmark-pulse {
+          0%, 100% { transform: translate(-50%, -50%) scale(.82); opacity: .62; }
+          50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+        }
+        @keyframes signsight-result-in {
+          0% { transform: translateY(18px) scale(.96); opacity: 0; }
+          100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        .signsight-float { animation: signsight-float 6s ease-in-out infinite; }
+        .signsight-scan { animation: signsight-scan 3.4s linear infinite; }
+        .signsight-pop { animation: signsight-pop .7s ease-out forwards; }
+        .signsight-ticker { animation: signsight-ticker 18s linear infinite; }
+        .signsight-landmark { animation: signsight-landmark-pulse 1.4s ease-in-out infinite; }
+        .signsight-result-in { animation: signsight-result-in .42s cubic-bezier(.2,.8,.2,1) both; }
+        @media (prefers-reduced-motion: reduce) {
+          .signsight-float, .signsight-scan, .signsight-pop, .signsight-ticker, .signsight-landmark, .signsight-result-in { animation: none !important; }
+        }
+      `}</style>
+
+      <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4 md:px-8">
+        <div className="mx-auto max-w-7xl rounded-[28px] border border-[#F67A16]/20 bg-[#FFFAF6]/92 p-1.5 shadow-[0_8px_28px_rgba(38,35,33,0.08)] backdrop-blur-xl">
+          <div className="flex items-center gap-2">
+            <a
+              href="#top"
+              className="group flex min-w-0 items-center gap-3 rounded-[21px] px-3 py-2.5 text-[#202124] transition hover:bg-[#FFF0E4] md:px-4"
+            >
+      
+              <div className="hidden leading-none sm:block">
+                <div className="text-[14px] font-black tracking-[-0.03em]">SignSight</div>
+                <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-black/40">FSL / Computer Vision</div>
+              </div>
+            </a>
+
+            <nav className="hidden flex-1 items-center justify-center gap-1 rounded-[21px] bg-[#FFF4EC] p-1 md:flex">
+              {[
+                ["01", "Experience", "#experience"],
+                ["02", "Features", "#features"],
+                ["03", "Plans", "/plans"],
+                ["03", "Download", "#download"],
+              ].map(([number, label, href]) => (
+                <a
+                  key={label}
+                  href={href}
+                  className="group relative flex items-center gap-2 overflow-hidden rounded-2xl px-4 py-2.5 text-sm font-semibold transition hover:bg-[#FFF0E4] hover:text-[#202124]"
+                >
+                  <span className="text-[9px] font-bold text-[#F67A16] transition group-hover:text-[#E9650A]">{number}</span>
+                  <span>{label}</span>
+                  <span className="absolute inset-x-4 bottom-1 h-0.5 origin-left scale-x-0 bg-[#F67A16] transition-transform group-hover:scale-x-100" />
+                </a>
+              ))}
+            </nav>
+
+            <a
+              href="#download"
+              className="ml-auto hidden h-11 items-center gap-2 rounded-[19px] border border-[#F67A16]/25 bg-[#F67A16]/[0.07] px-5 text-sm font-semibold text-[#A84D08] transition hover:border-[#F67A16]/40 hover:bg-[#F67A16]/10 lg:inline-flex"
+            >
+              Get the app <ArrowUpRight />
+            </a>
+
+            <div className="ml-auto hidden items-center gap-2 rounded-[19px] border border-[#F67A16]/20 bg-[#FFF6EF] px-3 py-2 lg:flex">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-[#F67A16]" />
+              <span className="text-[9px] font-bold uppercase tracking-[0.16em]">FSL Live</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMenuOpen((value) => !value)}
+              className="ml-auto grid h-11 w-11 place-items-center rounded-[19px] border border-black/10 bg-[#FFF9F5] md:hidden"
+              aria-label="Toggle menu"
+            >
+              <span className="text-lg font-black">{menuOpen ? "×" : "≡"}</span>
+            </button>
+          </div>
         </div>
 
-        <div className="hidden flex-1 items-center justify-end gap-8 md:flex">
-          <nav className="flex items-center gap-8">
-            <a
-              className="text-sm font-medium text-slate-700 transition-colors hover:text-[#e66e19] dark:text-slate-800"
-              href="#features"
-            >
-              Features
-            </a>
-            <a
-              className="text-sm font-medium text-slate-700 transition-colors hover:text-[#e66e19] dark:text-slate-800"
-              href="#how-it-works"
-            >
-              How it Works
-            </a>
-            <a
-              className="text-sm font-medium text-slate-700 transition-colors hover:text-[#e66e19] dark:text-slate-800"
-              href="#preview"
-            >
-              Preview
-            </a>
-          </nav>
-
-          <button className="bg-[#e66e19] flex h-10 min-w-[120px] cursor-pointer items-center justify-center rounded-full bg-#e66e19 px-5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-transform hover:scale-105">
-            Download
-          </button>
-        </div>
-
-        <div className="md:hidden">
-          <img
-            src="/icons/menu.png"
-            alt="Menu"
-            className="h-6 w-6 object-contain"
-          />
-        </div>
+        {menuOpen && (
+          <div className="mx-auto mt-3 max-w-7xl rounded-[26px] border border-[#F67A16]/15 bg-[#FFFAF6] p-2 shadow-[0_12px_30px_rgba(32,33,36,0.12)] md:hidden">
+            <div className="rounded-[20px] bg-[#FFF6EF] p-2">
+              {[
+                ["01", "Experience", "#experience"],
+                ["02", "Features", "#features"],
+                ["03", "Plans", "/plans"],
+                ["04", "Download", "#download"],
+              ].map(([number, label, href]) => (
+                <a
+                  key={label}
+                  href={href}
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-between rounded-2xl px-4 py-3 font-semibold transition hover:bg-[#FFF0E4] hover:text-[#202124]"
+                >
+                  <span className="flex items-center gap-3"><span className="text-[10px] text-[#F67A16]">{number}</span>{label}</span>
+                  <ArrowUpRight />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
       </header>
 
-      <main className="flex-1">
-        <section className="hero-gradient px-6 py-12 md:px-20 md:py-20 lg:px-40">
-          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
-            <div className="flex max-w-xl flex-col gap-6">
-              <div className="inline-flex w-fit items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#e66e19]">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-                </span>
-                Powered by MediaPipe AI
+      <main id="top">
+        <section ref={heroRef} className="relative h-[168vh] border-b border-black/10 lg:h-[145vh]">
+          <div className="sticky top-0 flex min-h-screen flex-col overflow-hidden bg-[#FFFAF6] pt-28">
+            <div className="absolute -left-24 top-36 h-72 w-72 rounded-full bg-[#F67A16]/10 blur-3xl" />
+            <div
+              className="absolute -right-20 bottom-16 h-96 w-96 rounded-full bg-[#FFA25A]/[0.07] blur-3xl transition-all duration-500"
+              style={{ transform: `scale(${0.96 + heroScroll * 0.08})`, opacity: 0.72 - heroScroll * 0.1 }}
+            />
+
+            <div className="pointer-events-none absolute inset-0 opacity-[0.16] [background-image:linear-gradient(to_right,#202124_1px,transparent_1px),linear-gradient(to_bottom,#202124_1px,transparent_1px)] [background-size:48px_48px] [mask-image:linear-gradient(to_bottom,black,transparent_86%)]" />
+
+            <div className="relative mx-auto grid w-full max-w-7xl flex-1 items-center gap-12 px-6 pb-10 pt-6 md:px-8 lg:grid-cols-[.92fr_1.08fr] lg:pb-8 lg:pt-8">
+              <div className="relative z-10">
+                <div className="mb-5 flex flex-wrap items-center gap-3">
+                  <div className="inline-flex items-center gap-3 rounded-full border border-[#F67A16]/20 bg-white/65 py-2 pl-2 pr-4 shadow-sm backdrop-blur">
+                    <span className="grid h-7 w-7 place-items-center rounded-full bg-[#F67A16]">
+                      <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
+                    </span>
+                    <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#A54B08]">Camera-based FSL translation</span>
+                  </div>
+
+                  <div className="rounded-full border border-black/10 bg-[#FFF5EF] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#62646A]">
+                    {heroChapter.number} · {heroChapter.label}
+                  </div>
+                </div>
+
+                <h1
+                  className="max-w-3xl text-[clamp(4rem,8.6vw,8rem)] font-extrabold leading-[0.81] tracking-[-0.075em]"
+                  style={{
+                    transform: `translateY(${-heroScroll * 10}px)`,
+                    opacity: 1 - heroScroll * 0.16,
+                  }}
+                >
+                  SIGN
+                  <span className="block text-[#F67A16]">SEEN.</span>
+                  <span className="block">WORDS</span>
+                  <span className="block">UNDERSTOOD.</span>
+                </h1>
+
+                <div className="mt-7 grid max-w-2xl gap-6 md:grid-cols-[1fr_auto] md:items-end">
+                  <div>
+                    <p className="max-w-xl text-base font-medium leading-7 text-black/60 md:text-lg">
+                      SignSight turns supported FSL hand signs into readable text through your phone camera — designed to make everyday communication more accessible and immediate.
+                    </p>
+                    <div className="mt-4 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.16em] text-black/45">
+                      <span className="h-px w-8 bg-[#F67A16]" />
+                      {heroChapter.short}
+                    </div>
+                  </div>
+
+                  <a
+                    href="#experience"
+                    className="group flex h-14 w-14 items-center justify-center rounded-full border border-black/20 bg-white/25 transition hover:bg-[#FFF0E4] hover:text-[#202124]"
+                    aria-label="Explore the experience"
+                  >
+                    <ChevronDown />
+                  </a>
+                </div>
+
+                <div className="mt-7 flex flex-wrap gap-3">
+                  <a
+                    href="#download"
+                    className="inline-flex h-14 items-center gap-3 rounded-full bg-[#F67A16] px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_26px_rgba(246,122,22,0.16)] transition hover:-translate-y-1 hover:bg-[#E9650A]"
+                  >
+                    <IconImg src="/icons/android.png" alt="Android" className="h-5 w-5 object-contain brightness-0 invert" />
+                    Download for Android
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => jumpToHeroChapter((heroChapterIndex + 1) % heroChapters.length)}
+                    className="inline-flex items-center gap-2 rounded-full border border-black/15 bg-white/55 px-5 py-3 text-sm font-semibold backdrop-blur transition hover:-translate-y-1 hover:bg-white"
+                  >
+                    Next scene <ArrowUpRight />
+                  </button>
+                </div>
+
+                <div className="mt-7 hidden max-w-xl grid-cols-4 gap-2 md:grid">
+                  {heroChapters.map((chapter, index) => {
+                    const active = index === heroChapterIndex;
+                    return (
+                      <button
+                        key={chapter.label}
+                        type="button"
+                        onClick={() => jumpToHeroChapter(index)}
+                        className={`group rounded-2xl border border-black/10 px-3 py-3 text-left transition-all ${
+                          active
+                            ? "border-[#F67A16]/25 bg-[#FFF2E8] text-[#202124] shadow-sm"
+                            : "bg-[#FFF9F5] hover:bg-white"
+                        }`}
+                        aria-pressed={active}
+                      >
+                        <div className={`text-[9px] font-bold uppercase tracking-[0.16em] ${active ? "text-[#FF9B4A]" : "text-black/35"}`}>
+                          {chapter.number}
+                        </div>
+                        <div className="mt-1 text-xs font-semibold">{chapter.label}</div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
-              <h1 className="text-5xl font-black leading-[1.1] tracking-tight text-slate-900 dark:text-slate-100 md:text-6xl">
-                ASL Landmark <span className="text-[#e66e19]">Translator</span>
-              </h1>
+              <div className="relative mx-auto flex w-full max-w-[650px] items-center justify-center lg:justify-end">
+                <div
+                  className="absolute left-1/2 top-1/2 h-[500px] w-[500px] rounded-full bg-[#FFE1C8]/[0.42] transition-all duration-500 sm:h-[540px] sm:w-[540px]"
+                  style={{ transform: `translate(-50%, -50%) scale(${0.94 + heroScroll * 0.06})`, opacity: 0.88 - heroScroll * 0.1 }}
+                />
 
-              <p className="text-lg font-normal leading-relaxed text-slate-600 dark:text-slate-400 md:text-xl">
-                Breaking communication barriers in real-time. Experience seamless
-                sign language interpretation using advanced computer vision
-                technology.
-              </p>
-
-              <div className="mt-4 flex flex-wrap gap-4">
-                <button className="bg-[#e66e19] flex min-w-[180px] cursor-pointer items-center justify-center gap-2 rounded-full bg-primary px-8 text-base font-bold text-white shadow-xl shadow-primary/30 transition-all duration-200 hover:scale-105 hover:bg-primary/90 active:scale-95 h-14">
-                  <IconImg
-                    src="/icons/android.png"
-                    alt="Android"
-                    className="h-5 w-5 object-contain"
-                  />
-                  Download for Android
+                <button
+                  type="button"
+                  onClick={() => jumpToHeroChapter(1)}
+                  className={`absolute left-[0%] top-[10%] z-30 hidden rounded-2xl border border-black/10 px-4 py-3 text-left shadow-[0_10px_25px_rgba(32,33,36,.10)] transition lg:block ${
+                    heroChapterIndex === 1 ? "bg-[#FFEEDD] text-[#202124]" : "bg-[#FFFAF6]"
+                  }`}
+                  style={{ transform: `translateY(${-heroScroll * 12}px)` }}
+                >
+                  <div className="text-[9px] font-bold uppercase tracking-[0.18em] opacity-45">Tracking</div>
+                  <div className="mt-1 text-sm font-semibold">21 landmarks</div>
                 </button>
 
-                <button className="flex min-w-[140px] cursor-pointer items-center justify-center rounded-lg border-2 border-primary/20 bg-transparent px-8 text-base font-bold text-slate-900 transition-all hover:bg-primary/5 h-14 dark:text-slate-100">
-                  Learn More
+                <button
+                  type="button"
+                  onClick={() => jumpToHeroChapter(3)}
+                  className={`absolute bottom-[8%] right-[-1%] z-30 hidden rounded-2xl border border-black/10 px-4 py-3 text-left shadow-[0_10px_25px_rgba(32,33,36,.10)] transition lg:block ${
+                    heroChapterIndex === 3 ? "bg-[#FFD9BC] text-[#202124]" : "bg-[#FFF8F4] text-[#202124]"
+                  }`}
+                  style={{ transform: `translateY(${heroScroll * 12}px)` }}
+                >
+                  <div className="text-[9px] font-bold uppercase tracking-[0.18em] opacity-45">Result</div>
+                  <div className="mt-1 text-lg font-black">{activeDemo.result}</div>
                 </button>
+
+                <div
+                  className="relative z-10 transition-transform duration-300"
+                  style={{ transform: `translateY(${-heroScroll * 18}px) scale(${0.97 + heroScroll * 0.03})` }}
+                >
+                  <div className="relative w-[285px] rounded-[52px] border-[10px] border-[#202124] bg-[#1D1E21] p-2 shadow-[0_26px_60px_rgba(32,33,36,0.16)] sm:w-[325px]">
+                    <div className="absolute left-1/2 top-3 z-30 h-6 w-28 -translate-x-1/2 rounded-full bg-[#1D1E21]" />
+                    <div className="relative aspect-[9/19.4] overflow-hidden rounded-[38px] bg-[#FFF8F3]">
+                      <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-6 pt-9 text-[10px] font-black text-black/65">
+                        <span>SignSight</span>
+                        <span
+                          className={`rounded-full px-2 py-1 transition-colors ${
+                            heroChapterIndex >= 2 ? "bg-[#FFEEDD] text-[#202124]" : "bg-white/85"
+                          }`}
+                        >
+                          {heroChapter.status}
+                        </span>
+                      </div>
+
+                      <div className="absolute inset-x-5 top-[18%] h-[54%] overflow-hidden rounded-[28px] border border-[#F67A16]/35 bg-gradient-to-br from-[#FFDCC2] via-[#FFF1E6] to-[#FFFAF6]">
+                        <div className="absolute inset-4 rounded-[20px] border border-dashed border-[#F67A16]/45" />
+                        <div className="absolute left-1/2 top-1/2 h-36 w-36 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#F67A16]/[0.08] blur-xl" />
+                        <IconImg
+                          src="/icons/hero-hand.png"
+                          alt="FSL hand sign preview"
+                          className="absolute left-1/2 top-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 object-contain drop-shadow-xl transition-all duration-500 sm:h-44 sm:w-44"
+                        />
+
+                        {heroChapterIndex >= 1 && landmarkPoints.map(([x, y], index) => (
+                          <span
+                            key={`${x}-${y}`}
+                            className="signsight-landmark absolute z-20 h-2.5 w-2.5 rounded-full border border-white bg-[#F67A16] shadow-[0_0_10px_rgba(246,122,22,.22)]"
+                            style={{
+                              left: `${x}%`,
+                              top: `${y}%`,
+                              animationDelay: `${index * 38}ms`,
+                            }}
+                          />
+                        ))}
+
+                        {heroChapterIndex >= 1 && (
+                          <div
+                            className="pointer-events-none absolute z-20 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#202124] transition-all duration-100"
+                            style={{
+                              left: `${[50, 47, 58, 54][heroChapterIndex]}%`,
+                              top: `${[50, 45, 52, 48][heroChapterIndex]}%`,
+                            }}
+                          >
+                            <span className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#202124]" />
+                          </div>
+                        )}
+
+                        {heroChapterIndex >= 2 && (
+                          <div className="signsight-scan absolute inset-x-0 top-0 z-30 h-16 bg-gradient-to-b from-transparent via-[#F67A16]/[0.42] to-transparent" />
+                        )}
+
+                        <span className="absolute left-3 top-3 h-5 w-5 border-l-2 border-t-2 border-[#F67A16]" />
+                        <span className="absolute right-3 top-3 h-5 w-5 border-r-2 border-t-2 border-[#F67A16]" />
+                        <span className="absolute bottom-3 left-3 h-5 w-5 border-b-2 border-l-2 border-[#F67A16]" />
+                        <span className="absolute bottom-3 right-3 h-5 w-5 border-b-2 border-r-2 border-[#F67A16]" />
+
+                        <div className="absolute inset-x-3 bottom-3 z-30 flex items-center justify-between gap-2">
+                          <div className="rounded-full bg-[#202124]/85 px-3 py-1.5 text-[8px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur">
+                            {heroChapterIndex === 0 && "Place hand in frame"}
+                            {heroChapterIndex === 1 && "Landmarks locked"}
+                            {heroChapterIndex === 2 && "Analyzing gesture"}
+                            {heroChapterIndex === 3 && "Translation complete"}
+                          </div>
+                          {heroChapterIndex >= 1 && (
+                            <div className="rounded-full bg-white/85 px-2.5 py-1.5 text-[8px] font-bold uppercase tracking-[0.14em] text-black backdrop-blur">
+                              FSL
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={triggerDetection}
+                        className={`absolute inset-x-5 bottom-5 rounded-[28px] p-5 text-left shadow-xl transition-all duration-500 ${
+                          heroChapterIndex === 3
+                            ? "signsight-result-in bg-[#FFF2E8] text-[#202124]"
+                            : "border border-black/10 bg-white/80 text-[#202124] backdrop-blur"
+                        }`}
+                        aria-label="Try the next sample sign"
+                      >
+                        <div className="flex items-center justify-between gap-4">
+                          <div>
+                            <div className={`text-[9px] font-bold uppercase tracking-[0.2em] ${heroChapterIndex === 3 ? "text-black/40" : "text-black/35"}`}>
+                              {heroChapterIndex === 3 ? "Translation" : "Live process"}
+                            </div>
+                            <div className="mt-1 text-2xl font-black tracking-[-0.04em]">
+                              {heroChapterIndex === 0 && "Ready"}
+                              {heroChapterIndex === 1 && "Tracking…"}
+                              {heroChapterIndex === 2 && "Detecting…"}
+                              {heroChapterIndex === 3 && activeDemo.result}
+                            </div>
+                          </div>
+                          <div className="grid h-11 w-11 place-items-center rounded-full bg-[#F67A16]">
+                            <IconImg src={heroChapterIndex === 3 ? "/icons/check.png" : "/icons/logo.png"} alt="SignSight status" className="h-6 w-6 object-contain" />
+                          </div>
+                        </div>
+                        <div className={`mt-4 h-1 overflow-hidden rounded-full ${heroChapterIndex === 3 ? "bg-black/10" : "bg-black/10"}`}>
+                          <div
+                            className="h-full rounded-full bg-[#F67A16] transition-all duration-500"
+                            style={{ width: `${22 + heroChapterIndex * 26}%` }}
+                          />
+                        </div>
+                        <div className={`mt-3 text-[8px] font-bold uppercase tracking-[0.14em] ${heroChapterIndex === 3 ? "text-black/35" : "text-black/35"}`}>
+                          Tap card to cycle sample
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pointer-events-none absolute -right-2 top-1/2 hidden -translate-y-1/2 items-center gap-3 lg:flex">
+                  <span className="text-[9px] font-bold uppercase tracking-[0.24em] text-black/35 [writing-mode:vertical-rl]">Scroll the story</span>
+                  <span className="relative h-28 w-px bg-black/15">
+                    <span className="absolute left-1/2 top-0 block w-1 -translate-x-1/2 rounded-full bg-[#F67A16] transition-[height] duration-150" style={{ height: `${Math.max(heroScroll, 0.04) * 100}%` }} />
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div className="relative flex justify-center lg:justify-end">
-              <div className="phone-float relative w-full max-w-[400px] aspect-[9/19] rounded-[3rem] border-[8px] border-slate-800 bg-slate-900 p-3 shadow-2xl">
-                <div className="absolute left-1/2 top-0 z-10 h-6 w-32 -translate-x-1/2 rounded-b-2xl bg-slate-800" />
-                <div className="relative h-full w-full overflow-hidden rounded-[2rem] bg-slate-200">
-                  <img
-                    className="h-full w-full object-cover"
-                    alt="Mobile app interface showing hand tracking landmarks"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1H47NcDGuynTMsuC1EdjWIWqEtUD9GzD6Yf84YXyFHpQ44qNjJBJBPg3taukD25lJAQtvAjmFpuddTP4tvtMk5kt-1pkdQeqiz_jjdLquAx3qCVvSCYt5UB6zZZigXNgODxkRQJXHqga91Rn7mH2v_0KLdktWUV-LTSvPweW5ueszOwqamXhNVVFJmlIhP3lvVzlHKxq5OLusKaJssVV18bZBlAoTQb2WNfWiitzKAmpD953cGaPOka2g6IZcJEm3mEwLqypJOg"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center bg-primary/10">
-                    <div className="flex flex-col items-center gap-2 rounded-xl border border-white/50 bg-white/80 p-4 shadow-lg backdrop-blur-sm">
-                      <IconImg
-                        src="/icons/hero-hand.png"
-                        alt="Detected hand sign"
-                        className="h-10 w-10 object-contain"
-                      />
-                      <span className="text-lg font-bold text-slate-900">
-                        "Hello"
-                      </span>
+            <div className="relative border-t border-black/10 bg-[#25262A] text-white">
+              <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4 text-[11px] font-black uppercase tracking-[0.18em] md:px-8">
+                <span className="text-white/45">Scroll-driven product demo</span>
+                <span>Frame</span>
+                <span className="text-[#FF9B4A]">•</span>
+                <span>Track</span>
+                <span className="text-[#FF9B4A]">•</span>
+                <span>Detect</span>
+                <span className="text-[#FF9B4A]">•</span>
+                <span>Translate</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="experience" className="relative px-6 pb-24 pt-8 md:px-8 md:pt-10 lg:pb-32 lg:pt-12">
+          <div className="mx-auto max-w-7xl">
+            <div className="grid gap-10 lg:grid-cols-[.8fr_1.2fr] lg:gap-20">
+              <div className="lg:sticky lg:top-32 lg:self-start">
+                <div className="mb-5 text-xs font-bold uppercase tracking-[0.22em] text-[#D95F05]">Try the interaction</div>
+                <h2 className="max-w-xl text-5xl font-extrabold leading-[0.95] tracking-[-0.055em] md:text-7xl">
+                  Don’t just read about it.
+                  <span className="text-[#F67A16]"> Play with it.</span>
+                </h2>
+                <p className="mt-6 max-w-lg text-lg leading-8 text-black/55">
+                  Switch between sample signs to preview how the interface responds. The real app uses the camera; this section makes the website feel like part of the product.
+                </p>
+              </div>
+
+              <div className="overflow-hidden rounded-[38px] border border-black/10 bg-[#FFF3EA] shadow-[0_20px_55px_rgba(32,33,36,0.12)]">
+                <div className="border-b border-black/10 px-5 py-4 md:px-7">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <span className="text-xs font-bold uppercase tracking-[0.2em]">Interactive translator preview</span>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 text-xs font-black">
+                        <span className="h-2 w-2 animate-pulse rounded-full bg-black" />
+                        Demo mode
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setAutoDemo((value) => !value)}
+                        className={`rounded-full border border-black/15 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.14em] transition ${
+                          autoDemo ? "bg-[#25262A] text-white" : "bg-[#FFF6EF] hover:bg-white"
+                        }`}
+                        aria-pressed={autoDemo}
+                      >
+                        Auto {autoDemo ? "on" : "off"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid min-h-[520px] md:grid-cols-[1fr_1.1fr]">
+                  <div className="border-b border-black/10 p-6 md:border-b-0 md:border-r-2 md:p-8">
+                    <div className="text-xs font-bold uppercase tracking-[0.18em] text-black/50">Choose a sample</div>
+                    <div className="mt-5 space-y-3">
+                      {demos.map((demo) => {
+                        const active = activeDemo.id === demo.id;
+                        return (
+                          <button
+                            type="button"
+                            key={demo.id}
+                            onClick={() => setActiveDemo(demo)}
+                            className={`group flex w-full items-center justify-between rounded-3xl border border-black/10 p-4 text-left transition-all ${
+                              active
+                                ? "bg-[#FFF0E4] text-[#202124] shadow-sm"
+                                : "bg-[#FFF9F5] hover:bg-white"
+                            }`}
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className={`grid h-14 w-14 place-items-center rounded-2xl text-xl font-black ${active ? "bg-[#F67A16]" : "bg-white"}`}>
+                                {demo.label.slice(0, 1)}
+                              </div>
+                              <div>
+                                <div className="font-black">{demo.label}</div>
+                                <div className={`mt-1 text-xs font-bold ${active ? "text-black/45" : "text-black/45"}`}>
+                                  {demo.helper}
+                                </div>
+                              </div>
+                            </div>
+                            <ArrowUpRight />
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="mt-6 overflow-hidden rounded-2xl border border-black/10 bg-[#202124] py-2 text-white">
+                      <div className="signsight-ticker flex w-max gap-8 whitespace-nowrap px-4 text-[9px] font-bold uppercase tracking-[0.2em] text-white/55">
+                        <span>FSL · CAMERA TRACKING · {activeDemo.result} · LIVE PREVIEW ·</span>
+                        <span>FSL · CAMERA TRACKING · {activeDemo.result} · LIVE PREVIEW ·</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="relative flex min-h-[420px] items-center justify-center overflow-hidden bg-[#FFF6EF] p-7 md:p-10">
+                    <div className="absolute inset-0 opacity-[0.16] [background-image:radial-gradient(#202124_1px,transparent_1px)] [background-size:18px_18px]" />
+                    <div className="relative w-full max-w-md rounded-[34px] border border-black/10 bg-white p-5 shadow-[0_14px_36px_rgba(32,33,36,0.10)]">
+                      <div className="flex items-center justify-between border-b border-black/10 pb-4">
+                        <div>
+                          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-black/35">Current mode</div>
+                          <div className="mt-1 font-black">{activeDemo.mode}</div>
+                        </div>
+                        <span className="rounded-full bg-[#F67A16]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#A84D08]">Live preview</span>
+                      </div>
+
+                      <div
+                        onMouseMove={handleTrackingMove}
+                        onClick={triggerDetection}
+                        className="group relative my-5 grid aspect-[4/3] cursor-crosshair place-items-center overflow-hidden rounded-[26px] bg-[#202124]"
+                        title="Move your pointer to simulate tracking. Click to detect the next sample."
+                      >
+                        <div className="absolute left-4 top-4 z-20 rounded-full border border-white/15 bg-black/35 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-white/60 backdrop-blur">
+                          Move pointer · Click to detect
+                        </div>
+                        <div className="relative grid h-[76%] w-[76%] place-items-center rounded-[24px] border border-[#F67A16]/40 bg-[#2D2F33] transition duration-300 group-hover:border-[#F67A16] group-hover:shadow-[0_0_30px_rgba(246,122,22,.10)]">
+                          <IconImg src="/icons/hero-hand.png" alt="FSL hand sign preview" className="h-28 w-28 object-contain transition duration-300 group-hover:scale-105" />
+                          <div className="absolute inset-x-0 h-px bg-[#F67A16] shadow-[0_0_10px_rgba(246,122,22,.28)] signsight-scan" />
+                        </div>
+
+                        <div
+                          className="pointer-events-none absolute z-30 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#F67A16] transition-[left,top] duration-75"
+                          style={{ left: `${trackingPoint.x}%`, top: `${trackingPoint.y}%` }}
+                        >
+                          <span className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#F67A16] shadow-[0_0_8px_rgba(246,122,22,.28)]" />
+                          <span className="absolute left-1/2 top-1/2 h-px w-16 -translate-x-1/2 -translate-y-1/2 bg-[#F67A16]/45" />
+                          <span className="absolute left-1/2 top-1/2 h-16 w-px -translate-x-1/2 -translate-y-1/2 bg-[#F67A16]/45" />
+                        </div>
+
+                        {detectionBurst > 0 && (
+                          <span
+                            key={detectionBurst}
+                            className="signsight-pop pointer-events-none absolute z-20 h-24 w-24 rounded-full border-2 border-[#F67A16]"
+                            style={{ left: `${trackingPoint.x}%`, top: `${trackingPoint.y}%` }}
+                          />
+                        )}
+                      </div>
+
+                      <div key={activeDemo.id} className="rounded-[24px] border border-[#F67A16]/15 bg-[#FFF5EE] p-5 transition-all">
+                        <div className="flex items-end justify-between gap-5">
+                          <div>
+                            <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-black/45">Detected result</div>
+                            <div className="mt-1 text-4xl font-black tracking-[-0.05em]">{activeDemo.result}</div>
+                          </div>
+                          <div className="rounded-full border-2 border-black px-3 py-1 text-[9px] font-bold uppercase tracking-[0.15em]">FSL</div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-
-              <div className="absolute -bottom-6 -left-6 max-w-[200px] rounded-2xl border border-[#e66e19]/10 bg-white p-6 shadow-xl md:-left-12 dark:bg-slate-800">
-                <div className="mb-2 flex items-center gap-3">
-                  <div className="flex size-8 items-center justify-center rounded-full bg-green-500/20 text-green-600">
-                    <IconImg
-                      src="/icons/verified.png"
-                      alt="Verified"
-                      className="h-4 w-4 object-contain"
-                    />
-                  </div>
-                  <span className="text-sm font-bold">98% Accuracy</span>
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Optimized landmark detection for low-light environments.
-                </p>
-              </div>
             </div>
           </div>
         </section>
 
-        <section
-          id="features"
-          className="bg-primary/5 px-6 py-20 md:px-20 lg:px-40"
-        >
-          <div className="mb-16 flex flex-col items-center gap-4 text-center">
-            <h2 className="text-4xl font-black tracking-tight text-slate-900 dark:text-slate-100">
-              Powerful AI Features
-            </h2>
-            <p className="max-w-2xl text-lg text-slate-600 dark:text-slate-400">
-              Bridging the gap with industry-leading computer vision and
-              real-time processing capabilities.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {featureCards.map((feature) => (
-              <div
-                key={feature.title}
-                className="flex flex-col gap-4 rounded-xl border border-[#e66e19]/10 bg-[#f8f7f6] p-8 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl dark:bg-background-dark"
-              >
-                <div className=" bg-[#FACB8F]  mb-2 flex size-12 items-center justify-center rounded-full bg-primary/10 text-[#e66e19]">
-                  <IconImg
-                    src={feature.icon}
-                    alt={feature.title}
-                    className="h-5 w-5 object-contain "
-                  />
-                </div>
-                <h3 className="text-xl font-bold text-orange-900 dark:text-black-100">
-                  {feature.title}
-                </h3>
-                <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-                  {feature.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section
-          id="how-it-works"
-          className="px-6 py-24 md:px-20 lg:px-40"
-        >
-          <h2 className="mb-20 text-center text-3xl font-black leading-tight text-slate-900 dark:text-slate-100 md:text-4xl">
-            How it Works
-          </h2>
-
-          <div className="relative grid grid-cols-1 gap-12 md:grid-cols-3">
-            <div className="absolute left-0 top-10 hidden h-0.5 w-full -z-0 bg-primary/20 md:block" />
-
-            {steps.map((step) => (
-              <div
-                key={step.title}
-                className="group flex flex-col items-center text-center"
-              >
-                <div className=" bg-[#E66E19] relative z-10 mb-6 flex size-20 items-center justify-center rounded-full bg-primary text-white shadow-xl shadow-primary/40 transition-transform group-hover:scale-110">
-                  <IconImg
-                    src={step.icon}
-                    alt={step.title}
-                    className="h-8 w-8 object-contain"
-                  />
-                </div>
-                <h4 className="mb-3 text-xl font-bold text-slate-900 dark:text-slate-100">
-                  {step.title}
-                </h4>
-                <p className="leading-relaxed text-slate-600 dark:text-slate-400">
-                  {step.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section
-          id="preview"
-          className="overflow-hidden bg-slate-900 px-6 py-20 md:px-20 lg:px-40"
-        >
-          <div className="mx-auto mb-16 flex max-w-4xl flex-col items-center gap-6 text-center">
-            <h2 className="text-4xl font-black text-white">
-              Experience SignSight
-            </h2>
-            <p className="text-lg text-slate-400">
-              Clean, intuitive, and lightning fast. Designed for accessibility
-              and everyday use.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-12 overflow-visible md:gap-24">
-            <div className="relative h-[500px] w-64 rotate-[-3deg] rounded-[2.5rem] border-4 border-slate-700 bg-slate-800 p-2 shadow-2xl transition-transform duration-500 hover:rotate-0">
-              <div className="h-full w-full overflow-hidden rounded-[2rem] bg-white">
-                <img
-                  className="h-full w-full object-cover opacity-80"
-                  alt="Data visualization of hand tracking points"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWmjEkvD6tQvr_MU3xdKDRmhP13RMIkG2horzUylpUTFn7WkVxdUlI1PHYTnfB3_6NlIMNDvuVdx3VTsBHpflImjKkEEo0-0qDXf0TJAMXmRA9CROJ7xoaU5QL7Mpibw7auVDsgG6aLYOXULOMC2c5PQoBaKE7Mfw_7Y09SY26kmkdfVNoMsNw2updrSCwtFK2Gll-rZ95ExBEyl0xD_424v0em6ZvuBgnvwYpncEluRhnMmk8Q8WPp_RRWvBbWA2dhzsWzTahAA"
-                />
-                <div className="absolute inset-x-0 top-10 flex flex-col items-center px-4">
-                  <div className="mb-4 flex h-8 w-full items-center rounded-lg bg-slate-100 px-2">
-                    <div className="mr-2 size-2 rounded-full bg-primary" />
-                    <div className="h-2 w-20 rounded-full bg-slate-300" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="relative z-10 h-[500px] w-64 rounded-[2.5rem] border-4 border-slate-700 bg-slate-800 p-2 shadow-2xl transition-transform duration-500 hover:scale-105">
-              <div className="flex h-full w-full items-center justify-center rounded-[2rem] bg-primary/10 p-6 text-center">
-                <div>
-                  <IconImg
-                    src="/icons/preview-abc.png"
-                    alt="Alphabet mode"
-                    className="mx-auto mb-4 h-10 w-10 object-contain"
-                  />
-                  <h5 className="mb-2 text-xl font-bold text-slate-900">
-                    Alphabet Mode
-                  </h5>
-                  <p className="text-sm text-slate-600">
-                    Practice letter by letter with instant feedback.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="relative h-[500px] w-64 rotate-3 rounded-[2.5rem] border-4 border-slate-700 bg-slate-800 p-2 shadow-2xl transition-transform duration-500 hover:rotate-0">
-              <div className="h-full w-full overflow-hidden rounded-[2rem] bg-white">
-                <img
-                  className="h-full w-full object-cover opacity-20"
-                  alt="Technical code background"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXdBs7sQ1VEkssujn9knVS0_oWqzTV0YJG9_ee4ALho8KWH_zhKuIXB4OVU-7QSHY1LuNpUWx0kwkWmT6OHKN7h-bH_aIWNXQz3LgRsiKk_qpsEkHzF2lXiBWz_NWulIrYkwzK1dXbNGrGM7rQCXPI9udDctrHGumoxO2LLmGAhV62jxbMF7_0JypLYzCw0Nnh1b0i-GjF0C89RUd-o0NUSyTyXlHiBayUdQDSB0cPw3Qjh_LJkaE7m-JAkf8xuzfw2W0QKcS0Fg"
-                />
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-6">
-                  <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-green-500 text-white">
-                    <IconImg
-                      src="/icons/check.png"
-                      alt="Perfect match"
-                      className="h-7 w-7 object-contain"
-                    />
-                  </div>
-                  <h5 className="font-bold text-slate-900">Perfect Match</h5>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="px-6 py-20 md:px-20 lg:px-40">
-          <div className="rounded-xl bg-gradient-to-r from-primary to-orange-500 p-10 text-white shadow-2xl md:rounded-lg md:p-20">
-            <div className="flex flex-col items-center justify-between gap-10 md:flex-row">
-              <div className="flex max-w-xl flex-col gap-4">
-                <h2 className="text-3xl font-black tracking-tight md:text-5xl">
-                  Ready to bridge the communication gap?
+        <section id="features" className="bg-[#202124] px-6 py-24 text-white md:px-8 lg:py-32">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-14 flex flex-col justify-between gap-7 md:flex-row md:items-end">
+              <div>
+                <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-[#F67A16]">What’s inside</div>
+                <h2 className="max-w-3xl text-5xl font-extrabold leading-[0.95] tracking-[-0.055em] md:text-7xl">
+                  Built around real-time signing.
                 </h2>
-                <p className="text-lg text-white/80">
-                  Download SignSight today and start communicating more
-                  effectively with the deaf and hard-of-hearing community.
-                </p>
+              </div>
+              <p className="max-w-sm text-sm font-medium leading-6 text-white/45">
+                Four focused tools work together to make recognition, learning, and feedback feel simple.
+              </p>
+            </div>
+
+            <div className="grid overflow-hidden rounded-[36px] border border-white/10 lg:grid-cols-2">
+              {featureCards.map((feature, index) => (
+                <article
+                  key={feature.title}
+                  className={`group relative min-h-[320px] overflow-hidden border-white/15 p-7 transition duration-500 hover:bg-[#292B2F] md:p-10 before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:origin-left before:scale-x-0 before:bg-[#F67A16] before:transition-transform before:duration-300 hover:before:scale-x-100 ${
+                    index % 2 === 0 ? "lg:border-r" : ""
+                  } ${index < 2 ? "border-b" : index === 2 ? "border-b lg:border-b-0" : ""}`}
+                >
+                  <div className="absolute right-[-20px] top-[-34px] text-[150px] font-black leading-none tracking-[-0.09em] text-white/[0.035] transition group-hover:text-white/[0.06]">
+                    {feature.number}
+                  </div>
+                  <div className="relative flex h-full flex-col justify-between gap-16">
+                    <div className="flex items-start justify-between">
+                      <div className="grid h-20 w-20 place-items-center rounded-[22px] bg-white p-2 text-black transition duration-300 group-hover:scale-105 group-hover:bg-[#FFF2E8] group-hover:shadow-sm">
+                        <IconImg src={feature.icon} alt={feature.title} className="h-full w-full object-contain" />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold uppercase tracking-[0.18em] text-white/35 group-hover:text-white/55">{feature.number}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-3xl font-black tracking-[-0.04em] md:text-4xl">{feature.title}</h3>
+                      <p className="mt-4 max-w-lg text-sm font-medium leading-6 text-white/50 transition group-hover:text-white/70 md:text-base">
+                        {feature.desc}
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="download" className="relative overflow-hidden border-t border-[#F67A16]/10 bg-[#FFFAF6] px-6 py-24 md:px-8 lg:py-32">
+          <div className="pointer-events-none absolute inset-0 opacity-[0.055] [background-image:linear-gradient(to_right,#202124_1px,transparent_1px),linear-gradient(to_bottom,#202124_1px,transparent_1px)] [background-size:42px_42px]" />
+          <div className="relative mx-auto max-w-7xl">
+            <div className="grid items-end gap-12 lg:grid-cols-[1.15fr_.85fr]">
+              <div>
+                <div className="mb-5 inline-flex rounded-full border border-[#F67A16]/25 bg-[#FFF2E8] px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#A84D08]">
+                  Android download
+                </div>
+                <h2 className="max-w-4xl text-[clamp(3.8rem,8vw,7.5rem)] font-extrabold leading-[0.84] tracking-[-0.075em]">
+                  TAKE
+                  <span className="block">SIGNSIGHT</span>
+                  <span className="block text-[#F67A16]">WITH YOU.</span>
+                </h2>
               </div>
 
-              <div className="flex w-full flex-col gap-4 md:w-auto">
-                <button className="flex h-16 items-center justify-center gap-3 rounded-full bg-white px-8 text-lg font-black text-[#e66e19] shadow-lg transition-colors hover:bg-slate-100">
-                  <IconImg
-                    src="/icons/download.png"
-                    alt="Download"
-                    className="h-5 w-5 object-contain"
-                  />
-                  Get for Android
-                </button>
-                <p className="text-center text-sm text-white/60">
-                  Coming soon to iOS
-                </p>
+              <div className="rounded-[34px] border border-black/10 bg-[#FFF9F5] p-5 shadow-[0_18px_50px_rgba(32,33,36,0.10)] md:p-7">
+                <div className="flex items-center gap-4 border-b border-black/10 pb-5">
+                  <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[#202124]">
+                    <IconImg src="/icons/android.png" alt="Android" className="h-7 w-7 object-contain brightness-0 invert" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-[0.16em] text-black/45">Available platform</div>
+                    <div className="mt-1 text-2xl font-black">Android</div>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 py-5 text-sm font-bold sm:grid-cols-2">
+                  <div className="rounded-2xl bg-white px-4 py-3">
+                    <div className="text-[10px] uppercase tracking-[0.16em] text-black/35">App</div>
+                    <div className="mt-1">SignSight</div>
+                  </div>
+                  <div className="rounded-2xl bg-white px-4 py-3">
+                    <div className="text-[10px] uppercase tracking-[0.16em] text-black/35">Status</div>
+                    <div className="mt-1">Ready to install</div>
+                  </div>
+                </div>
+
+                <a
+                  href="#"
+                  className="flex h-16 w-full items-center justify-between rounded-2xl bg-[#F67A16] px-5 font-semibold text-white shadow-[0_10px_24px_rgba(246,122,22,.18)] transition hover:bg-[#E9650A]"
+                >
+                  <span className="flex items-center gap-3">
+                    <IconImg src="/icons/download.png" alt="Download" className="h-5 w-5 object-contain brightness-0 invert" />
+                    Download APK
+                  </span>
+                  <ArrowUpRight />
+                </a>
+
+                <div className="mt-4 flex items-center justify-between gap-4 text-xs font-bold text-black/45">
+                  <span>iOS version in development</span>
+                  <span>SignSight</span>
+                </div>
               </div>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-[#e66e19]/10 bg-[#f8f7f6] px-6 py-16 md:px-20 lg:px-40 dark:bg-background-dark">
-        <div className="mb-12 grid grid-cols-1 gap-12 md:grid-cols-4">
-          <div className="col-span-1 flex flex-col gap-6 md:col-span-1">
-            <div className="flex items-center gap-2 text-[#e66e19]">
-              <IconImg
-                src="/icons/logo.png"
-                alt="SignSight logo"
-                className="h-7 w-7 object-contain"
-              />
-              <h2 className="text-xl font-black text-slate-900 dark:text-slate-100">
-                SignSight
-              </h2>
+      <footer className="bg-[#202124] px-6 py-10 text-white md:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 md:flex-row md:items-center">
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-full bg-[#F67A16]">
+              <IconImg src="/icons/logo.png" alt="SignSight" className="h-6 w-6 object-contain" />
             </div>
-
-            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-              Developing open-source AI tools to improve accessibility and
-              break down communication barriers worldwide.
-            </p>
-
-            <div className="flex gap-4">
-              <a className="text-slate-400 hover:text-[#e66e19]" href="#">
-                <IconImg
-                  src="/icons/footer-globe.png"
-                  alt="Website"
-                  className="h-4 w-4 object-contain"
-                />
-              </a>
-              <a className="text-slate-400 hover:text-[#e66e19]" href="#">
-                <IconImg
-                  src="/icons/footer-share.png"
-                  alt="Share"
-                  className="h-4 w-4 object-contain"
-                />
-              </a>
+            <div>
+              <div className="font-extrabold">SignSight</div>
+              <div className="mt-1 text-xs font-bold text-white/35">Camera-based FSL translator</div>
             </div>
           </div>
 
-          {footerCols.map((col) => (
-            <div key={col.title}>
-              <h4 className="mb-6 font-bold text-slate-900 dark:text-slate-100">
-                {col.title}
-              </h4>
-              <ul className="flex flex-col gap-4 text-sm text-slate-600 dark:text-slate-400">
-                {col.links.map((link) => (
-                  <li key={link}>
-                    <a className="hover:text-[#e66e19]" href="#">
-                      {link}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex flex-col items-center justify-between gap-6 border-t border-[#e66e19]/10 pt-12 md:flex-row">
-          <p className="text-sm text-slate-500">
-            © 2024 SignSight AI. All rights reserved.
-          </p>
-          <div className="flex items-center gap-4 text-sm font-bold text-slate-900 dark:text-slate-100">
-            <IconImg
-              src="/icons/footer-code.png"
-              alt="Code"
-              className="h-4 w-4 object-contain"
-            />
-            Built with MediaPipe &amp; TensorFlow
+          <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-white/55">
+            <a href="#experience" className="transition hover:text-white">Experience</a>
+            <a href="#features" className="transition hover:text-white">Features</a>
+            <a href="#download" className="transition hover:text-white">Download</a>
+            <a href="#" className="transition hover:text-white">GitHub</a>
           </div>
+
+          <p className="text-xs font-bold text-white/30">© 2026 SignSight</p>
         </div>
       </footer>
     </div>
