@@ -18,6 +18,7 @@ export const LETTER_CONFIDENCE_THRESHOLD = 0.6;
 export const WORD_CONFIDENCE_THRESHOLD = 0.55;
 export const LETTER_MOTION_CONFIDENCE_THRESHOLD = 0.75;
 export const WORD_NO_HAND_GRACE_MS = 750;
+export const SENTENCE_PAUSE_MS = 3000;
 export const STATIC_WORD_CONFIDENCE_THRESHOLD = 0.78;
 export const PARTIAL_MODEL_LETTER_CONFIDENCE_THRESHOLD = 0.78;
 export const VERY_SMALL_PARTIAL_MODEL_LETTER_CONFIDENCE_THRESHOLD = 0.84;
@@ -35,6 +36,8 @@ type RecognitionCallbacks = {
   setRecordingGestureFramesCount: SetState<number>;
   setWordGraceActive: SetState<boolean>;
   setLastGesturePredictionAtMs: SetState<number | null>;
+  setSentence: SetState<string>;
+  setCompletedSentence: SetState<string | null>;
 };
 
 type RecognitionRefs = {
@@ -64,6 +67,8 @@ export function createStreamingRecognitionBuffers(): StreamingRecognitionBuffers
     lastWordHandAtMs: 0,
     wordNoHandSinceMs: 0,
     wordMissCount: 0,
+    sentenceTokens: [],
+    sentenceNoHandSinceMs: 0,
   };
 }
 
@@ -77,6 +82,8 @@ export function resetStreamingRecognitionState(
     | "setWordGraceActive"
     | "setLastConf"
     | "setLastGesturePredictionAtMs"
+    | "setSentence"
+    | "setCompletedSentence"
     | "setLastLabel"
     | "setRawLabel"
   >
@@ -90,6 +97,8 @@ export function resetStreamingRecognitionState(
   callbacks.setRecordingGestureFramesCount(0);
   callbacks.setWordGraceActive(false);
   callbacks.setLastGesturePredictionAtMs(null);
+  callbacks.setSentence("");
+  callbacks.setCompletedSentence(null);
 }
 
 export async function processStreamingHandFrame(
@@ -108,6 +117,7 @@ export async function processStreamingHandFrame(
       return;
     }
 
+    context.buffersRef.current.sentenceNoHandSinceMs = 0;
     context.setLastHandedness(hand.handedness ?? null);
 
     if (context.detectMode === "LETTERS") {
@@ -294,6 +304,24 @@ export function hasUsableUpperBody(frame: GestureV2SampleFrame) {
 
 function handleNoHand(context: RecognitionContext) {
   const buffers = context.buffersRef.current;
+  const now = Date.now();
+
+  if (buffers.sentenceNoHandSinceMs === 0) {
+    buffers.sentenceNoHandSinceMs = now;
+  }
+
+  if (
+    buffers.sentenceTokens.length > 0 &&
+    now - buffers.sentenceNoHandSinceMs >= SENTENCE_PAUSE_MS
+  ) {
+    const completedSentence = buffers.sentenceTokens.join(" ");
+    buffers.sentenceTokens = [];
+    buffers.sentenceNoHandSinceMs = 0;
+    if (context.isMountedRef.current) {
+      context.setCompletedSentence(completedSentence);
+      context.setSentence("");
+    }
+  }
 
   if (context.detectMode === "LETTERS") {
     context.smootherRef.current.push("?");
@@ -305,7 +333,6 @@ function handleNoHand(context: RecognitionContext) {
       context.setRawLabel("—");
     }
   } else {
-    const now = Date.now();
     if (buffers.wordNoHandSinceMs === 0) {
       buffers.wordNoHandSinceMs = now;
     }
@@ -440,6 +467,7 @@ async function processLetterFrame(
     context.setLastLabel(stable);
     context.setLastConf(finalConf);
   }
+  appendSentenceToken(stable, context);
 }
 
 async function processWordFrame(
@@ -501,6 +529,7 @@ async function processWordFrame(
         context.setLastLabel(landmarkLabel);
         context.setLastConf(landmarkConf);
       }
+      appendSentenceToken(landmarkLabel, context);
       return;
     }
   } catch {}
@@ -598,5 +627,26 @@ async function processWordFrame(
     context.setRawLabel(word);
     context.setLastLabel(word);
     context.setLastConf(conf);
+  }
+  appendSentenceToken(word, context);
+}
+
+function appendSentenceToken(token: string, context: RecognitionContext) {
+  const normalizedToken = token.trim();
+  if (!normalizedToken || normalizedToken === "?" || normalizedToken === "—") {
+    return;
+  }
+
+  const buffers = context.buffersRef.current;
+  const previousToken = buffers.sentenceTokens[buffers.sentenceTokens.length - 1];
+  if (previousToken === normalizedToken) {
+    return;
+  }
+
+  buffers.sentenceTokens.push(normalizedToken);
+  buffers.sentenceNoHandSinceMs = 0;
+  if (context.isMountedRef.current) {
+    context.setSentence(buffers.sentenceTokens.join(" "));
+    context.setCompletedSentence(null);
   }
 }

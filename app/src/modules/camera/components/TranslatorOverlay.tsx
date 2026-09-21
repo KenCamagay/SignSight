@@ -17,6 +17,8 @@ type TranslatorMode = "letters" | "words";
 
 export function TranslatorOverlay({
   prediction,
+  sentence,
+  completedSentence,
   mode,
   onModeChange,
   modelLabel,
@@ -27,6 +29,8 @@ export function TranslatorOverlay({
   modelEmptyStateMessage,
 }: {
   prediction: PredictionViewModel;
+  sentence: string;
+  completedSentence: string | null;
   mode: TranslatorMode;
   onModeChange: (value: TranslatorMode) => void;
   modelLabel: string;
@@ -57,6 +61,10 @@ export function TranslatorOverlay({
             />
           </View>
         </View>
+        {sentence ? <Text style={styles.sentenceText}>{sentence}</Text> : null}
+        {completedSentence ? (
+          <Text style={styles.completedSentenceText}>Finished: {completedSentence}</Text>
+        ) : null}
 
         {modelStatusMessage ? (
           <Text style={styles.statusText}>{modelStatusMessage}</Text>
@@ -208,6 +216,18 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.78)",
     fontSize: TYPOGRAPHY.TEXT_MD,
     fontWeight: "700",
+  },
+  sentenceText: {
+    color: "#FFFFFF",
+    fontSize: TYPOGRAPHY.TEXT_XL,
+    fontWeight: "800",
+    lineHeight: 24,
+  },
+  completedSentenceText: {
+    color: "rgba(255,255,255,0.72)",
+    fontSize: TYPOGRAPHY.TEXT_SM,
+    fontWeight: "700",
+    lineHeight: 20,
   },
   helperText: {
     color: "rgba(255,255,255,0.68)",

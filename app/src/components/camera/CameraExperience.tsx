@@ -229,6 +229,8 @@ export default function CameraExperience({
     >
       <TranslatorOverlay
         prediction={recognitionRuntime.prediction}
+        sentence={recognitionRuntime.sentence}
+        completedSentence={recognitionRuntime.completedSentence}
         mode={mode}
         onModeChange={setMode}
         modelLabel={displayedModelLabel}

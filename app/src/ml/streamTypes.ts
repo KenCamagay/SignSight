@@ -43,4 +43,6 @@ export type StreamingRecognitionBuffers = {
   lastWordHandAtMs: number;
   wordNoHandSinceMs: number;
   wordMissCount: number;
+  sentenceTokens: string[];
+  sentenceNoHandSinceMs: number;
 };

@@ -33,6 +33,8 @@ export function useRecognitionRuntime({
   const [lastGesturePredictionAtMs, setLastGesturePredictionAtMs] = useState<number | null>(
     null
   );
+  const [sentence, setSentence] = useState("");
+  const [completedSentence, setCompletedSentence] = useState<string | null>(null);
 
   const buffersRef = useRef(createStreamingRecognitionBuffers());
   const smootherRef = useRef(new MajorityVoteSmoother(3));
@@ -61,6 +63,8 @@ export function useRecognitionRuntime({
       setLastConf: (confidence: number) =>
         setPrediction((current) => (current.confidence === confidence ? current : { ...current, confidence })),
       setLastGesturePredictionAtMs,
+      setSentence,
+      setCompletedSentence,
       setLastLabel: (label: string) =>
         setPrediction((current) => (current.label === label ? current : { ...current, label })),
       setRawLabel: (rawLabel: string) =>
@@ -80,6 +84,8 @@ export function useRecognitionRuntime({
       setLastConf: (confidence: number) =>
         setPrediction((current) => (current.confidence === confidence ? current : { ...current, confidence })),
       setLastGesturePredictionAtMs,
+      setSentence,
+      setCompletedSentence,
       setLastLabel: (label: string) =>
         setPrediction((current) => (current.label === label ? current : { ...current, label })),
       setRawLabel: (rawLabel: string) =>
@@ -108,6 +114,8 @@ export function useRecognitionRuntime({
       setLastConf: (confidence: number) =>
         setPrediction((current) => (current.confidence === confidence ? current : { ...current, confidence })),
       setLastGesturePredictionAtMs,
+      setSentence,
+      setCompletedSentence,
       setLastHandedness: (handedness: string | null) =>
         setPrediction((current) => (current.handedness === handedness ? current : {
           ...current,
@@ -138,6 +146,8 @@ export function useRecognitionRuntime({
     liveGestureFramesCount,
     latestHandFrame,
     prediction,
+    sentence,
+    completedSentence,
     recordingGestureFramesCount,
     resetGestureRecording,
     wordGraceActive,
