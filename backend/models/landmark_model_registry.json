@@ -1,5 +1,5 @@
 {
-  "active_version_id": "landmarks_bootstrap_20260405T035749Z",
+  "active_version_id": "landmarks_bootstrap_20260921T071502Z",
   "versions": [
     {
       "version_id": "legacy_20260401T101811Z",
@@ -236,6 +236,122 @@
       ],
       "trained_at": "2026-04-05T03:57:49+00:00",
       "accuracy": 1.0,
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20260917T232713Z",
+      "label": "Signsight S3",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "I",
+        "M",
+        "N",
+        "O",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "Y"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-09-17T23:27:13+00:00",
+      "accuracy": 1.0,
+      "note": "Retrained with approved Android and normalized iOS landmark samples",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20260921T034204Z",
+      "label": "Ios",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "A",
+        "B",
+        "C",
+        "S",
+        "T"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-09-21T03:42:04+00:00",
+      "accuracy": 1.0,
+      "note": "Alphabet",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20260921T044905Z",
+      "label": "More ios",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "L",
+        "O",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-09-21T04:49:05+00:00",
+      "accuracy": 1.0,
+      "note": "Train",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20260921T071502Z",
+      "label": "Ios",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "K",
+        "L",
+        "M",
+        "O",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-09-21T07:15:02+00:00",
+      "accuracy": 1.0,
+      "note": "Complete",
       "source": "trained"
     }
   ],

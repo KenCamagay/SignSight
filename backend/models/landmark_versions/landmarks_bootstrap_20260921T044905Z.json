@@ -1,0 +1,132 @@
+{
+  "version_id": "landmarks_bootstrap_20260921T044905Z",
+  "label": "More ios",
+  "note": "Train",
+  "training_mode": "bootstrap",
+  "accuracy": 1.0,
+  "active_static_letters": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "L",
+    "O",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V"
+  ],
+  "active_static_word_labels": [
+    "I_LOVE_YOU"
+  ],
+  "ready_static_letters": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "L",
+    "O",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V"
+  ],
+  "ready_static_word_labels": [
+    "I_LOVE_YOU"
+  ],
+  "unready_static_letters": [
+    "K",
+    "M",
+    "N",
+    "P",
+    "Q",
+    "W",
+    "X",
+    "Y"
+  ],
+  "deficits_by_label": {
+    "K": [
+      "K: approved 1/40",
+      "K: Left hand 0/20",
+      "K: Right hand 1/20"
+    ],
+    "M": [
+      "M: approved 0/40",
+      "M: Left hand 0/20",
+      "M: Right hand 0/20",
+      "M: signers 0/1"
+    ],
+    "N": [
+      "N: approved 0/40",
+      "N: Left hand 0/20",
+      "N: Right hand 0/20",
+      "N: signers 0/1"
+    ],
+    "P": [
+      "P: approved 0/40",
+      "P: Left hand 0/20",
+      "P: Right hand 0/20",
+      "P: signers 0/1"
+    ],
+    "Q": [
+      "Q: approved 1/40",
+      "Q: Left hand 0/20",
+      "Q: Right hand 1/20"
+    ],
+    "W": [
+      "W: approved 0/40",
+      "W: Left hand 0/20",
+      "W: Right hand 0/20",
+      "W: signers 0/1"
+    ],
+    "X": [
+      "X: approved 1/40",
+      "X: Left hand 0/20",
+      "X: Right hand 1/20"
+    ],
+    "Y": [
+      "Y: approved 0/40",
+      "Y: Left hand 0/20",
+      "Y: Right hand 0/20",
+      "Y: signers 0/1"
+    ]
+  },
+  "trained_at": "2026-09-21T04:49:05+00:00",
+  "training_sample_counts": {
+    "A": 1141,
+    "B": 1110,
+    "C": 994,
+    "D": 1715,
+    "E": 2776,
+    "F": 532,
+    "G": 987,
+    "H": 1180,
+    "I": 991,
+    "L": 1149,
+    "O": 897,
+    "R": 916,
+    "S": 926,
+    "T": 542,
+    "U": 853,
+    "V": 1150,
+    "I_LOVE_YOU": 296
+  },
+  "quotas_used": {
+    "min_approved_samples_per_label": 40,
+    "min_approved_per_hand": 20,
+    "min_signers_per_label": 1,
+    "min_ready_static_letters": 3
+  }
+}
