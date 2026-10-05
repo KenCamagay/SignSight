@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+type Point = [number, number];
 
 type Demo = {
-  id: string;
+  id: "a" | "hello" | "thanks";
   label: string;
   result: string;
   mode: string;
@@ -23,104 +25,288 @@ const demos: Demo[] = [
     label: "HELLO",
     result: "Hello",
     mode: "Word Mode",
-    helper: "Live word translation",
+    helper: "Dynamic gesture recognition",
   },
   {
     id: "thanks",
-    label: "THANKS",
+    label: "THANK YOU",
     result: "Thank you",
     mode: "Word Mode",
-    helper: "Live word translation",
+    helper: "Dynamic gesture recognition",
   },
 ];
 
-const featureCards = [
+const features = [
   {
-    number: "01",
     icon: "/icons/feature-translate.png",
     title: "Live Translation",
-    desc: "Point the camera at a supported FSL sign and see the detected letter or word on screen.",
+    description:
+      "Point your camera at a supported FSL sign and see the detected letter or word on screen.",
   },
   {
-    number: "02",
     icon: "/icons/feature-landmark.png",
     title: "Hand Landmark Tracking",
-    desc: "Tracks hand landmarks in real time to support fast on-device gesture recognition.",
+    description:
+      "Tracks hand landmarks in real time to help recognize gestures quickly.",
   },
   {
-    number: "03",
     icon: "/icons/feature-tutorial.png",
     title: "FSL Fingerspelling Tutorial",
-    desc: "Learn and review FSL fingerspelling through a focused tutorial inside the app.",
+    description:
+      "Learn and review Filipino Sign Language fingerspelling inside the app.",
   },
   {
-    number: "04",
     icon: "/icons/feature-tips.png",
     title: "Recognition Tips",
-    desc: "Simple guidance for hand placement, framing, and lighting before you start translating.",
+    description:
+      "Simple tips for hand placement, framing, and lighting for better recognition.",
   },
 ];
 
-const heroChapters = [
-  {
-    number: "01",
-    label: "Ready",
-    short: "Frame the sign",
-    status: "READY",
-  },
-  {
-    number: "02",
-    label: "Tracking",
-    short: "Find hand landmarks",
-    status: "TRACKING",
-  },
-  {
-    number: "03",
-    label: "Detecting",
-    short: "Analyze the gesture",
-    status: "SCANNING",
-  },
-  {
-    number: "04",
-    label: "Translated",
-    short: "Show the result",
-    status: "DETECTED",
-  },
+const handConnections = [
+  [0, 1], [1, 2], [2, 3], [3, 4],
+  [0, 5], [5, 6], [6, 7], [7, 8],
+  [5, 9], [9, 10], [10, 11], [11, 12],
+  [9, 13], [13, 14], [14, 15], [15, 16],
+  [13, 17], [17, 18], [18, 19], [19, 20],
+  [0, 17],
 ] as const;
 
-const landmarkPoints = [
-  [50, 73], [43, 63], [38, 52], [34, 41], [31, 31],
-  [48, 57], [47, 43], [46, 31], [46, 21],
-  [57, 56], [59, 41], [60, 29], [61, 20],
-  [66, 61], [70, 50], [73, 41], [76, 34],
-  [69, 70], [78, 66], [84, 61], [89, 56],
-] as const;
+// Static demo pose for the letter A.
+const aPose: Point[] = [
+  [50, 84], [38, 72], [31, 61], [28, 51], [35, 48],
+  [43, 62], [42, 51], [43, 46], [47, 48],
+  [51, 60], [51, 48], [52, 43], [56, 47],
+  [59, 62], [60, 51], [61, 47], [65, 51],
+  [67, 67], [69, 58], [70, 55], [73, 59],
+];
 
-function IconImg({
-  src,
-  alt,
-  className = "",
-}: {
-  src: string;
-  alt: string;
-  className?: string;
-}) {
-  return <img src={src} alt={alt} className={className} />;
-}
+const helloFrames: Point[][] = [
+  [[61.49, 30.81], [52.48, 32.43], [42.43, 31.82], [35.91, 29.77], [32.66, 27.65], [37.31, 26.61], [29.94, 23.89], [25.98, 22.02], [22.59, 20.3], [40.38, 24.83], [31.78, 21.7], [26.88, 19.67], [22.6, 17.71], [44.84, 23.6], [36.64, 20.76], [31.98, 18.86], [27.9, 17.22], [50.94, 22.77], [44.43, 20.53], [40.37, 19.37], [36.85, 18.32]],
+  [[62.58, 30.84], [53.56, 32.47], [43.18, 31.79], [36.53, 29.74], [33.14, 27.57], [38.3, 26.35], [30.96, 23.59], [27.08, 21.6], [23.61, 19.77], [41.36, 24.57], [32.75, 21.51], [27.72, 19.45], [23.39, 17.45], [45.84, 23.31], [37.9, 20.39], [33.1, 18.72], [28.84, 17.14], [51.78, 22.51], [45.32, 20.32], [41.15, 19.2], [37.02, 18.23]],
+  [[67.23, 30.23], [57.6, 31.61], [47.08, 30.77], [40.68, 28.5], [38.07, 25.87], [43.36, 25.16], [36.1, 22.29], [32.43, 20.41], [29.16, 18.66], [46.75, 23.32], [38.62, 19.86], [33.78, 17.75], [29.54, 15.74], [51.65, 22.03], [43.73, 19.05], [38.97, 17.22], [34.6, 15.61], [57.83, 21.36], [51.97, 19.12], [47.91, 17.84], [44.03, 16.66]],
+  [[71.11, 28.71], [61.13, 30.17], [51.34, 29.32], [44.91, 26.98], [42.56, 24.43], [48.21, 23.37], [41.14, 20.26], [37.77, 18.15], [35.08, 16.17], [51.97, 21.69], [44.23, 18.07], [39.59, 15.79], [35.81, 13.57], [57.11, 20.51], [49.91, 17.34], [45.52, 15.11], [41.27, 13.33], [64.22, 20.04], [58.6, 17.58], [54.43, 16.16], [50.7, 15.0]],
+  [[71.24, 28.69], [61.39, 29.99], [51.72, 29.05], [45.56, 26.7], [43.05, 24.11], [48.56, 23.14], [42.02, 19.9], [38.34, 17.69], [35.38, 15.64], [52.82, 21.5], [45.64, 17.74], [41.31, 15.31], [37.61, 13.08], [58.05, 20.44], [51.46, 17.13], [47.07, 14.88], [43.38, 12.99], [64.84, 20.01], [59.67, 17.28], [55.44, 15.86], [51.81, 14.67]],
+  [[72.69, 28.33], [62.62, 29.61], [52.86, 28.51], [46.62, 25.99], [44.18, 23.4], [50.3, 22.75], [43.74, 19.38], [40.21, 17.2], [37.32, 15.23], [54.36, 21.01], [47.15, 17.05], [42.57, 14.63], [38.81, 12.38], [59.6, 19.96], [53.16, 16.44], [48.65, 14.12], [45.01, 12.12], [66.31, 19.72], [61.36, 16.82], [57.35, 15.22], [53.78, 13.91]],
+  [[77.41, 27.47], [66.07, 28.93], [57.09, 28.09], [51.16, 25.61], [48.08, 22.66], [55.5, 22.16], [49.28, 18.39], [45.97, 15.89], [43.45, 13.84], [60.11, 20.7], [53.28, 16.49], [49.32, 13.5], [46.35, 11.0], [65.49, 19.81], [59.91, 15.87], [55.69, 13.32], [52.37, 11.1], [71.75, 19.43], [67.82, 16.32], [64.52, 14.33], [61.67, 12.79]],
+  [[76.44, 27.89], [65.99, 28.95], [56.94, 27.92], [51.16, 25.49], [48.51, 22.54], [55.39, 22.11], [49.47, 18.39], [46.23, 16.02], [43.76, 13.94], [59.99, 20.64], [53.61, 16.47], [49.53, 13.59], [46.22, 11.07], [65.52, 19.84], [60.15, 15.96], [55.85, 13.29], [52.21, 11.07], [71.98, 19.66], [68.06, 16.34], [64.59, 14.44], [61.52, 12.97]],
+  [[77.17, 27.78], [66.52, 28.98], [57.51, 28.04], [51.58, 25.51], [48.86, 22.57], [56.11, 22.16], [50.05, 18.42], [46.67, 16.03], [44.05, 13.95], [60.67, 20.7], [54.11, 16.53], [49.81, 13.66], [46.5, 11.12], [66.26, 19.87], [60.81, 15.97], [56.16, 13.34], [52.56, 11.07], [72.84, 19.8], [68.49, 16.49], [64.85, 14.62], [61.79, 13.12]],
+  [[76.13, 27.67], [65.56, 28.85], [56.96, 27.9], [51.42, 25.5], [48.32, 22.6], [55.38, 22.11], [49.29, 18.33], [45.95, 15.91], [43.45, 13.87], [60.06, 20.6], [53.42, 16.5], [49.36, 13.62], [45.96, 11.13], [65.55, 19.76], [59.85, 16.09], [55.61, 13.39], [51.84, 11.24], [72.13, 19.55], [67.86, 16.34], [64.28, 14.46], [60.96, 13.1]],
+  [[76.36, 27.46], [65.76, 28.73], [56.83, 27.84], [51.11, 25.4], [48.33, 22.36], [55.34, 22.09], [49.36, 18.32], [45.87, 15.95], [43.19, 13.91], [59.88, 20.63], [53.28, 16.46], [49.01, 13.55], [45.62, 11.07], [65.44, 19.65], [59.81, 15.89], [55.3, 13.26], [51.51, 11.02], [71.71, 19.48], [67.63, 16.27], [64.05, 14.39], [60.86, 13.02]],
+  [[68.42, 68.16], [50.33, 68.64], [36.92, 73.88], [32.14, 79.5], [33.04, 83.91], [37.46, 75.08], [31.4, 82.77], [29.78, 86.37], [29.01, 88.61], [45.88, 76.82], [40.99, 84.26], [39.32, 87.26], [38.9, 88.81], [54.6, 78.38], [49.64, 84.84], [48.16, 87.47], [48.17, 88.62], [62.14, 79.57], [57.77, 84.48], [56.17, 87.58], [56.36, 89.0]]
+];
+
+const thanksFrames: Point[][] = [
+  [[51.2, 58.86], [58.96, 51.58], [61.23, 44.31], [56.87, 39.52], [49.4, 37.6], [48.99, 40.64], [39.65, 32.23], [33.53, 27.76], [28.65, 24.4], [39.58, 42.41], [29.81, 32.96], [23.24, 27.66], [18.2, 23.4], [31.43, 45.06], [23.23, 36.19], [17.87, 31.09], [14.4, 27.14], [23.62, 48.13], [17.9, 41.41], [14.73, 37.31], [11.68, 33.78]],
+  [[52.21, 61.72], [60.77, 54.04], [63.21, 46.61], [59.31, 41.55], [51.25, 39.78], [50.18, 43.39], [39.7, 34.74], [33.71, 29.93], [28.74, 26.34], [40.85, 45.2], [29.79, 35.35], [22.82, 29.84], [16.87, 25.41], [32.0, 48.06], [22.89, 38.69], [17.5, 33.5], [13.63, 29.38], [23.71, 51.13], [17.51, 44.36], [14.0, 40.08], [11.0, 36.78]],
+  [[61.36, 64.83], [71.64, 57.78], [74.78, 49.82], [72.5, 43.48], [67.2, 39.78], [57.81, 45.43], [48.39, 36.57], [42.49, 31.54], [37.01, 27.71], [47.71, 47.0], [37.86, 37.09], [31.19, 30.99], [25.42, 26.19], [38.65, 49.79], [30.22, 40.59], [25.08, 34.91], [21.43, 30.75], [30.55, 53.34], [23.95, 46.11], [20.87, 41.7], [18.48, 37.95]],
+  [[71.48, 69.66], [81.6, 60.88], [84.28, 51.13], [78.99, 43.47], [70.15, 39.01], [68.87, 49.15], [59.5, 39.89], [53.78, 34.83], [49.23, 31.47], [58.24, 51.02], [49.37, 40.61], [43.04, 34.49], [37.96, 29.69], [48.38, 54.14], [41.0, 44.16], [35.88, 38.2], [32.52, 33.87], [39.78, 57.56], [33.75, 50.11], [31.2, 45.46], [28.65, 41.74]],
+  [[76.96, 74.54], [84.89, 64.96], [86.41, 54.84], [81.01, 46.75], [73.89, 41.3], [75.37, 54.39], [65.34, 44.85], [59.2, 39.58], [54.56, 35.85], [64.96, 56.85], [54.98, 46.17], [48.32, 39.84], [43.31, 34.99], [54.58, 60.32], [45.81, 50.14], [41.37, 43.95], [38.21, 39.35], [45.41, 64.11], [38.84, 56.24], [35.22, 51.27], [32.6, 47.28]],
+  [[75.81, 75.15], [84.67, 66.34], [86.47, 56.73], [80.57, 48.83], [73.86, 43.77], [76.25, 55.44], [66.28, 45.66], [59.94, 40.2], [55.23, 36.4], [64.88, 57.64], [55.76, 46.85], [49.86, 40.59], [44.95, 35.64], [54.61, 60.82], [46.72, 50.92], [41.77, 44.82], [38.72, 40.13], [45.39, 64.47], [39.32, 56.79], [35.93, 51.99], [33.02, 48.03]],
+  [[75.81, 75.53], [84.85, 66.52], [86.3, 56.78], [80.85, 48.74], [73.89, 43.43], [77.28, 56.4], [67.4, 46.48], [61.3, 41.02], [56.9, 37.06], [65.83, 58.67], [56.89, 47.77], [51.1, 41.41], [46.51, 36.4], [55.64, 61.81], [47.89, 51.72], [42.76, 45.65], [40.12, 40.86], [46.35, 65.45], [40.37, 57.73], [37.02, 52.9], [34.3, 48.89]],
+  [[76.88, 75.84], [85.36, 66.87], [86.52, 57.15], [81.35, 49.16], [74.45, 43.86], [78.29, 56.85], [68.38, 47.13], [62.26, 41.82], [58.13, 37.97], [67.39, 59.18], [58.44, 48.42], [52.31, 42.16], [47.9, 37.33], [56.98, 62.31], [49.15, 52.27], [44.29, 46.32], [41.33, 41.74], [47.09, 65.96], [41.51, 58.19], [37.98, 53.19], [35.49, 49.16]],
+  [[77.16, 76.5], [86.03, 68.1], [87.18, 58.98], [82.66, 52.07], [76.56, 47.83], [79.44, 57.68], [70.16, 47.8], [64.34, 42.3], [59.39, 38.47], [68.02, 59.83], [58.96, 48.81], [53.07, 42.54], [48.75, 37.58], [57.69, 62.84], [49.81, 52.8], [44.85, 46.83], [42.24, 42.09], [48.08, 66.33], [42.15, 58.79], [38.79, 53.96], [36.39, 49.88]],
+  [[77.39, 76.6], [86.39, 68.1], [87.41, 58.94], [82.62, 51.93], [77.18, 47.65], [80.07, 57.73], [71.59, 47.78], [65.71, 42.24], [60.73, 38.35], [68.93, 59.92], [60.11, 48.76], [54.14, 42.35], [49.59, 37.35], [58.48, 62.88], [50.81, 52.71], [45.76, 46.62], [42.91, 41.96], [48.7, 66.4], [42.86, 58.66], [39.56, 53.71], [37.09, 49.62]],
+  [[77.45, 76.06], [86.14, 67.4], [86.87, 58.08], [81.49, 51.01], [75.31, 46.51], [80.74, 57.34], [72.02, 47.39], [65.59, 41.91], [60.72, 38.02], [69.93, 59.61], [60.52, 48.36], [54.24, 42.02], [50.0, 37.0], [58.89, 62.36], [50.67, 52.18], [46.06, 46.11], [43.24, 41.4], [48.95, 65.81], [42.65, 57.9], [39.28, 53.01], [36.97, 48.99]],
+  [[80.62, 76.41], [87.95, 68.28], [89.0, 59.68], [85.14, 53.39], [80.42, 49.99], [83.73, 57.97], [76.04, 48.32], [69.09, 42.89], [63.62, 39.06], [73.29, 60.54], [63.72, 49.42], [56.87, 43.07], [51.64, 38.23], [62.83, 63.66], [54.25, 53.68], [49.2, 47.71], [46.14, 43.23], [52.94, 67.27], [46.56, 59.63], [43.04, 54.88], [40.92, 50.82]]
+];
+
+const gestureFrames: Record<Demo["id"], Point[][]> = {
+  a: [aPose],
+  hello: helloFrames,
+  thanks: thanksFrames,
+};
 
 function ArrowUpRight() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <path d="M7 17 17 7" />
       <path d="M8 7h9v9" />
     </svg>
   );
 }
 
-function ChevronDown() {
+function ArrowDown() {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
+
+function FaceGuide() {
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      className="pointer-events-none absolute inset-0 h-full w-full"
+      aria-hidden="true"
+    >
+      {/* Head */}
+      <ellipse
+        cx="50"
+        cy="38"
+        rx="17"
+        ry="22"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.15"
+        className="text-white/20"
+      />
+
+      {/* Ears */}
+      <path
+        d="M33 36 C29.5 35 29.5 43 33.5 44"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1"
+        className="text-white/15"
+      />
+      <path
+        d="M67 36 C70.5 35 70.5 43 66.5 44"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1"
+        className="text-white/15"
+      />
+
+      {/* Eyes */}
+      <path
+        d="M41 36 Q44 34.5 47 36"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="0.9"
+        strokeLinecap="round"
+        className="text-white/16"
+      />
+      <path
+        d="M53 36 Q56 34.5 59 36"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="0.9"
+        strokeLinecap="round"
+        className="text-white/16"
+      />
+
+      {/* Nose */}
+      <path
+        d="M50 37 L48.5 44 Q50 45 52 44"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="0.8"
+        strokeLinecap="round"
+        className="text-white/13"
+      />
+
+      {/* Mouth */}
+      <path
+        d="M45 49 Q50 51 55 49"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="0.9"
+        strokeLinecap="round"
+        className="text-white/18"
+      />
+
+      {/* Neck */}
+      <path
+        d="M43 58 L42 67 M57 58 L58 67"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        strokeLinecap="round"
+        className="text-white/16"
+      />
+
+      {/* Shoulders */}
+      <path
+        d="M42 66 Q28 68 19 80 M58 66 Q72 68 81 80"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.15"
+        strokeLinecap="round"
+        className="text-white/16"
+      />
+
+      {/* Chin reference */}
+      <circle
+        cx="50"
+        cy="57"
+        r="1.2"
+        className="fill-white/20"
+      />
+    </svg>
+  );
+}
+
+function AnimatedHand({
+  pose,
+  detecting = false,
+}: {
+  pose: Point[];
+  detecting?: boolean;
+}) {
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      className="h-full w-full"
+      role="img"
+      aria-label="Animated 21-point hand landmark preview"
+    >
+      {handConnections.map(([start, end]) => {
+        const [x1, y1] = pose[start];
+        const [x2, y2] = pose[end];
+
+        return (
+          <line
+            key={`${start}-${end}`}
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            className="landmark-line"
+          />
+        );
+      })}
+
+      {pose.map(([x, y], index) => (
+        <g key={index}>
+          <circle
+            cx={x}
+            cy={y}
+            r={index === 0 ? 3.8 : 3}
+            className="landmark-point-glow"
+          />
+          <circle
+            cx={x}
+            cy={y}
+            r={index === 0 ? 2.1 : 1.65}
+            className="landmark-point"
+          />
+        </g>
+      ))}
+
+      {detecting && (
+        <circle
+          cx="50"
+          cy="50"
+          r="43"
+          fill="none"
+          className="landmark-ring"
+        />
+      )}
     </svg>
   );
 }
@@ -128,614 +314,483 @@ function ChevronDown() {
 export default function SignSightDownloadPage() {
   const [activeDemo, setActiveDemo] = useState<Demo>(demos[1]);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [trackingPoint, setTrackingPoint] = useState({ x: 50, y: 50 });
-  const [detectionBurst, setDetectionBurst] = useState(0);
-  const [heroScroll, setHeroScroll] = useState(0);
-  const [autoDemo, setAutoDemo] = useState(false);
-  const heroRef = useRef<HTMLElement | null>(null);
+  const [frameIndex, setFrameIndex] = useState(0);
+  const [cycle, setCycle] = useState(0);
 
-  // Keep the final translated state close to the end of the sticky hero so
-  // there is no long “finished but still scrolling” dead zone.
-  const heroChapterIndex =
-    heroScroll < 0.25 ? 0 :
-    heroScroll < 0.50 ? 1 :
-    heroScroll < 0.75 ? 2 : 3;
-  const heroChapter = heroChapters[heroChapterIndex];
+  const frames = useMemo(
+    () => gestureFrames[activeDemo.id] ?? [aPose],
+    [activeDemo.id],
+  );
+
+  const isDynamic = frames.length > 1;
+  const currentPose = frames[Math.min(frameIndex, frames.length - 1)];
 
   useEffect(() => {
-    let frame = 0;
+    setFrameIndex(0);
+    setCycle(0);
 
-    const clamp = (value: number) => Math.min(1, Math.max(0, value));
+    if (frames.length <= 1) return;
 
-    const updateScrollScene = () => {
-      frame = 0;
-      const viewportHeight = window.innerHeight || 1;
-
-      if (heroRef.current) {
-        const rect = heroRef.current.getBoundingClientRect();
-        const travel = Math.max(rect.height - viewportHeight, 1);
-        setHeroScroll(clamp(-rect.top / travel));
-      }
-    };
-
-    const requestUpdate = () => {
-      if (frame) return;
-      frame = window.requestAnimationFrame(updateScrollScene);
-    };
-
-    updateScrollScene();
-    window.addEventListener("scroll", requestUpdate, { passive: true });
-    window.addEventListener("resize", requestUpdate);
-
-    return () => {
-      window.removeEventListener("scroll", requestUpdate);
-      window.removeEventListener("resize", requestUpdate);
-      if (frame) window.cancelAnimationFrame(frame);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!autoDemo) return;
-
+    const frameDuration = 95;
     const timer = window.setInterval(() => {
-      setActiveDemo((current) => {
-        const currentIndex = demos.findIndex((demo) => demo.id === current.id);
-        return demos[(currentIndex + 1) % demos.length];
+      setFrameIndex((current) => {
+        if (current >= frames.length - 1) {
+          setCycle((value) => value + 1);
+          return 0;
+        }
+        return current + 1;
       });
-      setDetectionBurst((value) => value + 1);
-    }, 2200);
+    }, frameDuration);
 
     return () => window.clearInterval(timer);
-  }, [autoDemo]);
+  }, [activeDemo.id, frames]);
 
+  const progress = isDynamic
+    ? ((frameIndex + 1) / frames.length) * 100
+    : 100;
 
-  const jumpToHeroChapter = (index: number) => {
-    const section = heroRef.current;
-    if (!section) return;
-    const travel = Math.max(section.offsetHeight - window.innerHeight, 1);
-    const chapterStops = [0.02, 0.28, 0.54, 0.80];
-    const targetProgress = chapterStops[Math.max(0, Math.min(3, index))];
-    window.scrollTo({
-      top: section.offsetTop + travel * targetProgress,
-      behavior: "smooth",
-    });
-  };
+  const status = !isDynamic
+    ? "DETECTED"
+    : frameIndex < Math.ceil(frames.length * 0.22)
+      ? "TRACKING"
+      : frameIndex < frames.length - 2
+        ? "DETECTING"
+        : "DETECTED";
 
-  const handleTrackingMove = (event: MouseEvent<HTMLDivElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-    setTrackingPoint({ x, y });
-  };
-
-  const triggerDetection = () => {
-    const currentIndex = demos.findIndex((demo) => demo.id === activeDemo.id);
-    setActiveDemo(demos[(currentIndex + 1) % demos.length]);
-    setDetectionBurst((value) => value + 1);
+  const selectDemo = (demo: Demo) => {
+    setActiveDemo(demo);
+    setFrameIndex(0);
+    setCycle(0);
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#FFFAF6] text-[#202124] selection:bg-[#F67A16]/[0.08] selection:text-[#202124]">
+    <div className="min-h-screen overflow-x-hidden bg-[#FFFAF6] text-[#202124]">
       <style jsx global>{`
-        @keyframes signsight-float {
-          0%, 100% { transform: translateY(0px) rotate(-1.5deg); }
-          50% { transform: translateY(-12px) rotate(1deg); }
+        html {
+          scroll-behavior: smooth;
         }
-        @keyframes signsight-scan {
-          0% { transform: translateY(-140%); opacity: 0; }
-          15% { opacity: 1; }
-          85% { opacity: 1; }
-          100% { transform: translateY(640%); opacity: 0; }
+
+        .landmark-line {
+          stroke: #f67a16;
+          stroke-width: 1.5;
+          stroke-linecap: round;
+          opacity: 0.68;
+          transition:
+            x1 90ms linear,
+            y1 90ms linear,
+            x2 90ms linear,
+            y2 90ms linear;
         }
-        @keyframes signsight-pop {
-          0% { transform: translate(-50%, -50%) scale(.35); opacity: .95; }
-          100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+
+        .landmark-point {
+          fill: #f67a16;
+          stroke: #fffaf6;
+          stroke-width: 0.65;
+          transition:
+            cx 90ms linear,
+            cy 90ms linear;
         }
-        @keyframes signsight-ticker {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
+
+        .landmark-point-glow {
+          fill: rgba(246, 122, 22, 0.14);
+          transition:
+            cx 90ms linear,
+            cy 90ms linear;
         }
-        @keyframes signsight-landmark-pulse {
-          0%, 100% { transform: translate(-50%, -50%) scale(.82); opacity: .62; }
-          50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+
+        @keyframes scan {
+          0% {
+            top: 8%;
+            opacity: 0;
+          }
+          15% {
+            opacity: 1;
+          }
+          85% {
+            opacity: 1;
+          }
+          100% {
+            top: 90%;
+            opacity: 0;
+          }
         }
-        @keyframes signsight-result-in {
-          0% { transform: translateY(18px) scale(.96); opacity: 0; }
-          100% { transform: translateY(0) scale(1); opacity: 1; }
+
+        @keyframes landmarkPulse {
+          0%,
+          100% {
+            opacity: 0.16;
+          }
+          50% {
+            opacity: 0.5;
+          }
         }
-        .signsight-float { animation: signsight-float 6s ease-in-out infinite; }
-        .signsight-scan { animation: signsight-scan 3.4s linear infinite; }
-        .signsight-pop { animation: signsight-pop .7s ease-out forwards; }
-        .signsight-ticker { animation: signsight-ticker 18s linear infinite; }
-        .signsight-landmark { animation: signsight-landmark-pulse 1.4s ease-in-out infinite; }
-        .signsight-result-in { animation: signsight-result-in .42s cubic-bezier(.2,.8,.2,1) both; }
+
+        @keyframes resultIn {
+          from {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .scan-line {
+          animation: scan 1.35s linear infinite;
+        }
+
+        .landmark-ring {
+          stroke: #f67a16;
+          stroke-width: 0.6;
+          stroke-dasharray: 3 4;
+          transform-origin: center;
+          animation: landmarkPulse 1.8s ease-in-out infinite;
+        }
+
+        .result-in {
+          animation: resultIn 350ms ease-out both;
+        }
+
         @media (prefers-reduced-motion: reduce) {
-          .signsight-float, .signsight-scan, .signsight-pop, .signsight-ticker, .signsight-landmark, .signsight-result-in { animation: none !important; }
+          .scan-line,
+          .landmark-ring,
+          .result-in {
+            animation: none;
+          }
+
+          .landmark-line,
+          .landmark-point,
+          .landmark-point-glow {
+            transition: none;
+          }
         }
       `}</style>
 
-      <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4 md:px-8">
-        <div className="mx-auto max-w-7xl rounded-[28px] border border-[#F67A16]/20 bg-[#FFFAF6]/92 p-1.5 shadow-[0_8px_28px_rgba(38,35,33,0.08)] backdrop-blur-xl">
-          <div className="flex items-center gap-2">
-            <a
-              href="#top"
-              className="group flex min-w-0 items-center gap-3 rounded-[21px] px-3 py-2.5 text-[#202124] transition hover:bg-[#FFF0E4] md:px-4"
-            >
-      
-              <div className="hidden leading-none sm:block">
-                <div className="text-[14px] font-black tracking-[-0.03em]">SignSight</div>
-                <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-black/40">FSL / Computer Vision</div>
-              </div>
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-black/10 bg-[#FFFAF6]/95 backdrop-blur-md">
+        <div className="mx-auto flex h-[76px] max-w-7xl items-center px-6 md:px-8">
+          <a href="#top" className="flex items-center gap-3">
+            <img
+              src="/icons/logo.png"
+              alt="SignSight"
+              className="h-9 w-9 object-contain"
+            />
+            <span className="text-lg font-extrabold tracking-[-0.04em]">
+              SignSight
+            </span>
+          </a>
+
+          <nav className="ml-auto hidden items-center gap-8 text-sm font-semibold md:flex">
+            <a href="#experience" className="transition hover:text-[#F67A16]">
+              Experience
             </a>
-
-            <nav className="hidden flex-1 items-center justify-center gap-1 rounded-[21px] bg-[#FFF4EC] p-1 md:flex">
-              {[
-                ["01", "Experience", "#experience"],
-                ["02", "Features", "#features"],
-                ["03", "Plans", "/plans"],
-                ["03", "Download", "#download"],
-              ].map(([number, label, href]) => (
-                <a
-                  key={label}
-                  href={href}
-                  className="group relative flex items-center gap-2 overflow-hidden rounded-2xl px-4 py-2.5 text-sm font-semibold transition hover:bg-[#FFF0E4] hover:text-[#202124]"
-                >
-                  <span className="text-[9px] font-bold text-[#F67A16] transition group-hover:text-[#E9650A]">{number}</span>
-                  <span>{label}</span>
-                  <span className="absolute inset-x-4 bottom-1 h-0.5 origin-left scale-x-0 bg-[#F67A16] transition-transform group-hover:scale-x-100" />
-                </a>
-              ))}
-            </nav>
-
-            <a
-              href="#download"
-              className="ml-auto hidden h-11 items-center gap-2 rounded-[19px] border border-[#F67A16]/25 bg-[#F67A16]/[0.07] px-5 text-sm font-semibold text-[#A84D08] transition hover:border-[#F67A16]/40 hover:bg-[#F67A16]/10 lg:inline-flex"
-            >
-              Get the app <ArrowUpRight />
+            <a href="#features" className="transition hover:text-[#F67A16]">
+              Features
             </a>
+            <a href="/plans" className="transition hover:text-[#F67A16]">
+              Plans
+            </a>
+            <a href="#download" className="transition hover:text-[#F67A16]">
+              Download
+            </a>
+          </nav>
 
-            <div className="ml-auto hidden items-center gap-2 rounded-[19px] border border-[#F67A16]/20 bg-[#FFF6EF] px-3 py-2 lg:flex">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-[#F67A16]" />
-              <span className="text-[9px] font-bold uppercase tracking-[0.16em]">FSL Live</span>
-            </div>
+          <a
+            href="#download"
+            className="ml-8 hidden rounded-full bg-[#202124] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#F67A16] md:inline-flex"
+          >
+            Get the app
+          </a>
 
-            <button
-              type="button"
-              onClick={() => setMenuOpen((value) => !value)}
-              className="ml-auto grid h-11 w-11 place-items-center rounded-[19px] border border-black/10 bg-[#FFF9F5] md:hidden"
-              aria-label="Toggle menu"
-            >
-              <span className="text-lg font-black">{menuOpen ? "×" : "≡"}</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            className="ml-auto grid h-10 w-10 place-items-center md:hidden"
+            aria-label="Open menu"
+          >
+            <span className="text-2xl">{menuOpen ? "×" : "≡"}</span>
+          </button>
         </div>
 
         {menuOpen && (
-          <div className="mx-auto mt-3 max-w-7xl rounded-[26px] border border-[#F67A16]/15 bg-[#FFFAF6] p-2 shadow-[0_12px_30px_rgba(32,33,36,0.12)] md:hidden">
-            <div className="rounded-[20px] bg-[#FFF6EF] p-2">
-              {[
-                ["01", "Experience", "#experience"],
-                ["02", "Features", "#features"],
-                ["03", "Plans", "/plans"],
-                ["04", "Download", "#download"],
-              ].map(([number, label, href]) => (
-                <a
-                  key={label}
-                  href={href}
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-between rounded-2xl px-4 py-3 font-semibold transition hover:bg-[#FFF0E4] hover:text-[#202124]"
-                >
-                  <span className="flex items-center gap-3"><span className="text-[10px] text-[#F67A16]">{number}</span>{label}</span>
-                  <ArrowUpRight />
-                </a>
-              ))}
+          <div className="border-t border-black/10 bg-[#FFFAF6] px-6 py-5 md:hidden">
+            <div className="flex flex-col gap-4 font-semibold">
+              <a href="#experience" onClick={() => setMenuOpen(false)}>
+                Experience
+              </a>
+              <a href="#features" onClick={() => setMenuOpen(false)}>
+                Features
+              </a>
+              <a href="/plans" onClick={() => setMenuOpen(false)}>
+                Plans
+              </a>
+              <a href="#download" onClick={() => setMenuOpen(false)}>
+                Download
+              </a>
             </div>
           </div>
         )}
       </header>
 
       <main id="top">
-        <section ref={heroRef} className="relative h-[168vh] border-b border-black/10 lg:h-[145vh]">
-          <div className="sticky top-0 flex min-h-screen flex-col overflow-hidden bg-[#FFFAF6] pt-28">
-            <div className="absolute -left-24 top-36 h-72 w-72 rounded-full bg-[#F67A16]/10 blur-3xl" />
-            <div
-              className="absolute -right-20 bottom-16 h-96 w-96 rounded-full bg-[#FFA25A]/[0.07] blur-3xl transition-all duration-500"
-              style={{ transform: `scale(${0.96 + heroScroll * 0.08})`, opacity: 0.72 - heroScroll * 0.1 }}
-            />
+        <section className="relative min-h-screen overflow-hidden border-b border-black/10 px-6 pb-16 pt-32 md:px-8 md:pt-36">
+          <div className="absolute -right-40 top-32 h-[450px] w-[450px] rounded-full bg-[#F67A16]/[0.06] blur-3xl" />
 
-            <div className="pointer-events-none absolute inset-0 opacity-[0.16] [background-image:linear-gradient(to_right,#202124_1px,transparent_1px),linear-gradient(to_bottom,#202124_1px,transparent_1px)] [background-size:48px_48px] [mask-image:linear-gradient(to_bottom,black,transparent_86%)]" />
+          <div className="relative mx-auto grid min-h-[calc(100vh-190px)] max-w-7xl items-center gap-16 lg:grid-cols-[1fr_.8fr]">
+            <div>
+              <div className="mb-7 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.18em] text-[#C95D0A]">
+                <span className="h-2 w-2 rounded-full bg-[#F67A16]" />
+                Filipino Sign Language
+              </div>
 
-            <div className="relative mx-auto grid w-full max-w-7xl flex-1 items-center gap-12 px-6 pb-10 pt-6 md:px-8 lg:grid-cols-[.92fr_1.08fr] lg:pb-8 lg:pt-8">
-              <div className="relative z-10">
-                <div className="mb-5 flex flex-wrap items-center gap-3">
-                  <div className="inline-flex items-center gap-3 rounded-full border border-[#F67A16]/20 bg-white/65 py-2 pl-2 pr-4 shadow-sm backdrop-blur">
-                    <span className="grid h-7 w-7 place-items-center rounded-full bg-[#F67A16]">
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
-                    </span>
-                    <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#A54B08]">Camera-based FSL translation</span>
-                  </div>
+              <h1 className="max-w-4xl text-[clamp(4.2rem,8vw,7.8rem)] font-extrabold leading-[0.82] tracking-[-0.075em]">
+                SIGN
+                <span className="block text-[#F67A16]">SEEN.</span>
+                <span className="block">WORDS</span>
+                <span className="block">UNDERSTOOD.</span>
+              </h1>
 
-                  <div className="rounded-full border border-black/10 bg-[#FFF5EF] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#62646A]">
-                    {heroChapter.number} · {heroChapter.label}
-                  </div>
-                </div>
+              <p className="mt-8 max-w-xl text-base font-medium leading-7 text-black/55 md:text-lg">
+                SignSight recognizes supported FSL signs through your phone
+                camera and turns them into readable text.
+              </p>
 
-                <h1
-                  className="max-w-3xl text-[clamp(4rem,8.6vw,8rem)] font-extrabold leading-[0.81] tracking-[-0.075em]"
-                  style={{
-                    transform: `translateY(${-heroScroll * 10}px)`,
-                    opacity: 1 - heroScroll * 0.16,
-                  }}
+              <div className="mt-8 flex flex-wrap items-center gap-5">
+                <a
+                  href="#download"
+                  className="inline-flex items-center gap-3 rounded-full bg-[#F67A16] px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-[#E9650A]"
                 >
-                  SIGN
-                  <span className="block text-[#F67A16]">SEEN.</span>
-                  <span className="block">WORDS</span>
-                  <span className="block">UNDERSTOOD.</span>
-                </h1>
+                  <img
+                    src="/icons/android.png"
+                    alt=""
+                    className="h-5 w-5 object-contain brightness-0 invert"
+                  />
+                  Download for Android
+                </a>
 
-                <div className="mt-7 grid max-w-2xl gap-6 md:grid-cols-[1fr_auto] md:items-end">
-                  <div>
-                    <p className="max-w-xl text-base font-medium leading-7 text-black/60 md:text-lg">
-                      SignSight turns supported FSL hand signs into readable text through your phone camera — designed to make everyday communication more accessible and immediate.
-                    </p>
-                    <div className="mt-4 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.16em] text-black/45">
-                      <span className="h-px w-8 bg-[#F67A16]" />
-                      {heroChapter.short}
+                <a
+                  href="#experience"
+                  className="inline-flex items-center gap-2 text-sm font-semibold underline decoration-black/25 underline-offset-4 transition hover:text-[#F67A16]"
+                >
+                  See how it works
+                  <ArrowDown />
+                </a>
+              </div>
+            </div>
+
+            <div className="relative mx-auto">
+              <div className="absolute left-1/2 top-1/2 h-[370px] w-[370px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#F67A16]/10 sm:h-[440px] sm:w-[440px]" />
+
+              <div className="relative w-[275px] rounded-[48px] border-[9px] border-[#202124] bg-[#202124] p-2 shadow-[0_28px_70px_rgba(32,33,36,.16)] sm:w-[315px]">
+                <div className="absolute left-1/2 top-3 z-30 h-6 w-28 -translate-x-1/2 rounded-full bg-[#202124]" />
+
+                <div className="relative aspect-[9/19.4] overflow-hidden rounded-[36px] bg-[#FFF8F3]">
+                  <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-6 pt-10">
+                    <span className="text-[10px] font-black">SignSight</span>
+                    <span className="rounded-full bg-white px-2.5 py-1 text-[8px] font-bold">
+                      {status}
+                    </span>
+                  </div>
+
+                  <div className="absolute inset-x-5 top-[19%] flex h-[53%] items-center justify-center overflow-hidden rounded-[26px] border border-[#F67A16]/30 bg-[#FFE9D8]">
+                    <div className="absolute inset-4 rounded-[19px] border border-dashed border-[#F67A16]/35" />
+
+                    {isDynamic && (
+                      <div className="absolute inset-0 z-0">
+                        <FaceGuide />
+                      </div>
+                    )}
+
+                    <div className="relative z-10 h-[86%] w-[86%]">
+                      <AnimatedHand
+                        pose={currentPose}
+                        detecting={status !== "DETECTED"}
+                      />
+                    </div>
+
+                    {status === "DETECTING" && (
+                      <div className="scan-line absolute inset-x-0 z-20 h-px bg-[#F67A16] shadow-[0_0_12px_rgba(246,122,22,.7)]" />
+                    )}
+                  </div>
+
+                  <div className="absolute inset-x-5 bottom-5 rounded-[24px] bg-white p-5 shadow-sm">
+                    <div className="text-[9px] font-bold uppercase tracking-[0.16em] text-black/35">
+                      Live recognition
+                    </div>
+
+                    <div className="mt-1 text-2xl font-black tracking-[-0.04em]">
+                      {status === "TRACKING" && "Tracking..."}
+                      {status === "DETECTING" && "Detecting..."}
+                      {status === "DETECTED" && activeDemo.result}
+                    </div>
+
+                    <div className="mt-4 h-1 overflow-hidden rounded-full bg-black/10">
+                      <div
+                        className="h-full rounded-full bg-[#F67A16] transition-[width] duration-100"
+                        style={{ width: `${progress}%` }}
+                      />
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
-                  <a
-                    href="#experience"
-                    className="group flex h-14 w-14 items-center justify-center rounded-full border border-black/20 bg-white/25 transition hover:bg-[#FFF0E4] hover:text-[#202124]"
-                    aria-label="Explore the experience"
-                  >
-                    <ChevronDown />
-                  </a>
+        <section
+          id="experience"
+          className="scroll-mt-20 px-6 py-24 md:px-8 lg:py-32"
+        >
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-14 max-w-2xl">
+              <div className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#D95F05]">
+                Try SignSight
+              </div>
+
+              <h2 className="text-5xl font-extrabold leading-[0.95] tracking-[-0.055em] md:text-7xl">
+                See how a sign
+                <span className="text-[#F67A16]"> becomes text.</span>
+              </h2>
+
+              <p className="mt-6 max-w-xl leading-7 text-black/55">
+                Choose a sample sign and watch the 21 hand landmarks follow the
+                recorded gesture sequence before SignSight presents the result.
+              </p>
+            </div>
+
+            <div className="grid overflow-hidden rounded-[32px] border border-black/10 bg-white lg:grid-cols-[.7fr_1.3fr]">
+              <div className="border-b border-black/10 p-6 lg:border-b-0 lg:border-r lg:p-8">
+                <div className="mb-5 text-xs font-bold uppercase tracking-[0.16em] text-black/40">
+                  Choose a sign
                 </div>
 
-                <div className="mt-7 flex flex-wrap gap-3">
-                  <a
-                    href="#download"
-                    className="inline-flex h-14 items-center gap-3 rounded-full bg-[#F67A16] px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_26px_rgba(246,122,22,0.16)] transition hover:-translate-y-1 hover:bg-[#E9650A]"
-                  >
-                    <IconImg src="/icons/android.png" alt="Android" className="h-5 w-5 object-contain brightness-0 invert" />
-                    Download for Android
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => jumpToHeroChapter((heroChapterIndex + 1) % heroChapters.length)}
-                    className="inline-flex items-center gap-2 rounded-full border border-black/15 bg-white/55 px-5 py-3 text-sm font-semibold backdrop-blur transition hover:-translate-y-1 hover:bg-white"
-                  >
-                    Next scene <ArrowUpRight />
-                  </button>
-                </div>
+                <div className="space-y-2">
+                  {demos.map((demo) => {
+                    const active = activeDemo.id === demo.id;
 
-                <div className="mt-7 hidden max-w-xl grid-cols-4 gap-2 md:grid">
-                  {heroChapters.map((chapter, index) => {
-                    const active = index === heroChapterIndex;
                     return (
                       <button
-                        key={chapter.label}
+                        key={demo.id}
                         type="button"
-                        onClick={() => jumpToHeroChapter(index)}
-                        className={`group rounded-2xl border border-black/10 px-3 py-3 text-left transition-all ${
+                        onClick={() => selectDemo(demo)}
+                        className={`flex w-full items-center justify-between rounded-2xl px-5 py-4 text-left transition ${
                           active
-                            ? "border-[#F67A16]/25 bg-[#FFF2E8] text-[#202124] shadow-sm"
-                            : "bg-[#FFF9F5] hover:bg-white"
+                            ? "bg-[#F67A16] text-white"
+                            : "bg-[#FFF8F3] hover:bg-[#FFF0E4]"
                         }`}
-                        aria-pressed={active}
                       >
-                        <div className={`text-[9px] font-bold uppercase tracking-[0.16em] ${active ? "text-[#FF9B4A]" : "text-black/35"}`}>
-                          {chapter.number}
+                        <div>
+                          <div className="font-bold">{demo.label}</div>
+                          <div
+                            className={`mt-1 text-xs ${
+                              active ? "text-white/65" : "text-black/40"
+                            }`}
+                          >
+                            {demo.helper}
+                          </div>
                         </div>
-                        <div className="mt-1 text-xs font-semibold">{chapter.label}</div>
+
+                        <ArrowUpRight />
                       </button>
                     );
                   })}
                 </div>
-              </div>
 
-              <div className="relative mx-auto flex w-full max-w-[650px] items-center justify-center lg:justify-end">
-                <div
-                  className="absolute left-1/2 top-1/2 h-[500px] w-[500px] rounded-full bg-[#FFE1C8]/[0.42] transition-all duration-500 sm:h-[540px] sm:w-[540px]"
-                  style={{ transform: `translate(-50%, -50%) scale(${0.94 + heroScroll * 0.06})`, opacity: 0.88 - heroScroll * 0.1 }}
-                />
-
-                <button
-                  type="button"
-                  onClick={() => jumpToHeroChapter(1)}
-                  className={`absolute left-[0%] top-[10%] z-30 hidden rounded-2xl border border-black/10 px-4 py-3 text-left shadow-[0_10px_25px_rgba(32,33,36,.10)] transition lg:block ${
-                    heroChapterIndex === 1 ? "bg-[#FFEEDD] text-[#202124]" : "bg-[#FFFAF6]"
-                  }`}
-                  style={{ transform: `translateY(${-heroScroll * 12}px)` }}
-                >
-                  <div className="text-[9px] font-bold uppercase tracking-[0.18em] opacity-45">Tracking</div>
-                  <div className="mt-1 text-sm font-semibold">21 landmarks</div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => jumpToHeroChapter(3)}
-                  className={`absolute bottom-[8%] right-[-1%] z-30 hidden rounded-2xl border border-black/10 px-4 py-3 text-left shadow-[0_10px_25px_rgba(32,33,36,.10)] transition lg:block ${
-                    heroChapterIndex === 3 ? "bg-[#FFD9BC] text-[#202124]" : "bg-[#FFF8F4] text-[#202124]"
-                  }`}
-                  style={{ transform: `translateY(${heroScroll * 12}px)` }}
-                >
-                  <div className="text-[9px] font-bold uppercase tracking-[0.18em] opacity-45">Result</div>
-                  <div className="mt-1 text-lg font-black">{activeDemo.result}</div>
-                </button>
-
-                <div
-                  className="relative z-10 transition-transform duration-300"
-                  style={{ transform: `translateY(${-heroScroll * 18}px) scale(${0.97 + heroScroll * 0.03})` }}
-                >
-                  <div className="relative w-[285px] rounded-[52px] border-[10px] border-[#202124] bg-[#1D1E21] p-2 shadow-[0_26px_60px_rgba(32,33,36,0.16)] sm:w-[325px]">
-                    <div className="absolute left-1/2 top-3 z-30 h-6 w-28 -translate-x-1/2 rounded-full bg-[#1D1E21]" />
-                    <div className="relative aspect-[9/19.4] overflow-hidden rounded-[38px] bg-[#FFF8F3]">
-                      <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-6 pt-9 text-[10px] font-black text-black/65">
-                        <span>SignSight</span>
+                <div className="mt-8 border-t border-black/10 pt-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex -space-x-1">
+                      {[0, 1, 2, 3].map((item) => (
                         <span
-                          className={`rounded-full px-2 py-1 transition-colors ${
-                            heroChapterIndex >= 2 ? "bg-[#FFEEDD] text-[#202124]" : "bg-white/85"
-                          }`}
-                        >
-                          {heroChapter.status}
-                        </span>
-                      </div>
-
-                      <div className="absolute inset-x-5 top-[18%] h-[54%] overflow-hidden rounded-[28px] border border-[#F67A16]/35 bg-gradient-to-br from-[#FFDCC2] via-[#FFF1E6] to-[#FFFAF6]">
-                        <div className="absolute inset-4 rounded-[20px] border border-dashed border-[#F67A16]/45" />
-                        <div className="absolute left-1/2 top-1/2 h-36 w-36 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#F67A16]/[0.08] blur-xl" />
-                        <IconImg
-                          src="/icons/hero-hand.png"
-                          alt="FSL hand sign preview"
-                          className="absolute left-1/2 top-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 object-contain drop-shadow-xl transition-all duration-500 sm:h-44 sm:w-44"
+                          key={item}
+                          className="h-2.5 w-2.5 rounded-full border border-white bg-[#F67A16]"
                         />
-
-                        {heroChapterIndex >= 1 && landmarkPoints.map(([x, y], index) => (
-                          <span
-                            key={`${x}-${y}`}
-                            className="signsight-landmark absolute z-20 h-2.5 w-2.5 rounded-full border border-white bg-[#F67A16] shadow-[0_0_10px_rgba(246,122,22,.22)]"
-                            style={{
-                              left: `${x}%`,
-                              top: `${y}%`,
-                              animationDelay: `${index * 38}ms`,
-                            }}
-                          />
-                        ))}
-
-                        {heroChapterIndex >= 1 && (
-                          <div
-                            className="pointer-events-none absolute z-20 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#202124] transition-all duration-100"
-                            style={{
-                              left: `${[50, 47, 58, 54][heroChapterIndex]}%`,
-                              top: `${[50, 45, 52, 48][heroChapterIndex]}%`,
-                            }}
-                          >
-                            <span className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#202124]" />
-                          </div>
-                        )}
-
-                        {heroChapterIndex >= 2 && (
-                          <div className="signsight-scan absolute inset-x-0 top-0 z-30 h-16 bg-gradient-to-b from-transparent via-[#F67A16]/[0.42] to-transparent" />
-                        )}
-
-                        <span className="absolute left-3 top-3 h-5 w-5 border-l-2 border-t-2 border-[#F67A16]" />
-                        <span className="absolute right-3 top-3 h-5 w-5 border-r-2 border-t-2 border-[#F67A16]" />
-                        <span className="absolute bottom-3 left-3 h-5 w-5 border-b-2 border-l-2 border-[#F67A16]" />
-                        <span className="absolute bottom-3 right-3 h-5 w-5 border-b-2 border-r-2 border-[#F67A16]" />
-
-                        <div className="absolute inset-x-3 bottom-3 z-30 flex items-center justify-between gap-2">
-                          <div className="rounded-full bg-[#202124]/85 px-3 py-1.5 text-[8px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur">
-                            {heroChapterIndex === 0 && "Place hand in frame"}
-                            {heroChapterIndex === 1 && "Landmarks locked"}
-                            {heroChapterIndex === 2 && "Analyzing gesture"}
-                            {heroChapterIndex === 3 && "Translation complete"}
-                          </div>
-                          {heroChapterIndex >= 1 && (
-                            <div className="rounded-full bg-white/85 px-2.5 py-1.5 text-[8px] font-bold uppercase tracking-[0.14em] text-black backdrop-blur">
-                              FSL
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={triggerDetection}
-                        className={`absolute inset-x-5 bottom-5 rounded-[28px] p-5 text-left shadow-xl transition-all duration-500 ${
-                          heroChapterIndex === 3
-                            ? "signsight-result-in bg-[#FFF2E8] text-[#202124]"
-                            : "border border-black/10 bg-white/80 text-[#202124] backdrop-blur"
-                        }`}
-                        aria-label="Try the next sample sign"
-                      >
-                        <div className="flex items-center justify-between gap-4">
-                          <div>
-                            <div className={`text-[9px] font-bold uppercase tracking-[0.2em] ${heroChapterIndex === 3 ? "text-black/40" : "text-black/35"}`}>
-                              {heroChapterIndex === 3 ? "Translation" : "Live process"}
-                            </div>
-                            <div className="mt-1 text-2xl font-black tracking-[-0.04em]">
-                              {heroChapterIndex === 0 && "Ready"}
-                              {heroChapterIndex === 1 && "Tracking…"}
-                              {heroChapterIndex === 2 && "Detecting…"}
-                              {heroChapterIndex === 3 && activeDemo.result}
-                            </div>
-                          </div>
-                          <div className="grid h-11 w-11 place-items-center rounded-full bg-[#F67A16]">
-                            <IconImg src={heroChapterIndex === 3 ? "/icons/check.png" : "/icons/logo.png"} alt="SignSight status" className="h-6 w-6 object-contain" />
-                          </div>
-                        </div>
-                        <div className={`mt-4 h-1 overflow-hidden rounded-full ${heroChapterIndex === 3 ? "bg-black/10" : "bg-black/10"}`}>
-                          <div
-                            className="h-full rounded-full bg-[#F67A16] transition-all duration-500"
-                            style={{ width: `${22 + heroChapterIndex * 26}%` }}
-                          />
-                        </div>
-                        <div className={`mt-3 text-[8px] font-bold uppercase tracking-[0.14em] ${heroChapterIndex === 3 ? "text-black/35" : "text-black/35"}`}>
-                          Tap card to cycle sample
-                        </div>
-                      </button>
+                      ))}
                     </div>
+                    <span className="text-xs font-medium text-black/40">
+                      21-point hand tracking
+                    </span>
                   </div>
                 </div>
-
-                <div className="pointer-events-none absolute -right-2 top-1/2 hidden -translate-y-1/2 items-center gap-3 lg:flex">
-                  <span className="text-[9px] font-bold uppercase tracking-[0.24em] text-black/35 [writing-mode:vertical-rl]">Scroll the story</span>
-                  <span className="relative h-28 w-px bg-black/15">
-                    <span className="absolute left-1/2 top-0 block w-1 -translate-x-1/2 rounded-full bg-[#F67A16] transition-[height] duration-150" style={{ height: `${Math.max(heroScroll, 0.04) * 100}%` }} />
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="relative border-t border-black/10 bg-[#25262A] text-white">
-              <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4 text-[11px] font-black uppercase tracking-[0.18em] md:px-8">
-                <span className="text-white/45">Scroll-driven product demo</span>
-                <span>Frame</span>
-                <span className="text-[#FF9B4A]">•</span>
-                <span>Track</span>
-                <span className="text-[#FF9B4A]">•</span>
-                <span>Detect</span>
-                <span className="text-[#FF9B4A]">•</span>
-                <span>Translate</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="experience" className="relative px-6 pb-24 pt-8 md:px-8 md:pt-10 lg:pb-32 lg:pt-12">
-          <div className="mx-auto max-w-7xl">
-            <div className="grid gap-10 lg:grid-cols-[.8fr_1.2fr] lg:gap-20">
-              <div className="lg:sticky lg:top-32 lg:self-start">
-                <div className="mb-5 text-xs font-bold uppercase tracking-[0.22em] text-[#D95F05]">Try the interaction</div>
-                <h2 className="max-w-xl text-5xl font-extrabold leading-[0.95] tracking-[-0.055em] md:text-7xl">
-                  Don’t just read about it.
-                  <span className="text-[#F67A16]"> Play with it.</span>
-                </h2>
-                <p className="mt-6 max-w-lg text-lg leading-8 text-black/55">
-                  Switch between sample signs to preview how the interface responds. The real app uses the camera; this section makes the website feel like part of the product.
-                </p>
               </div>
 
-              <div className="overflow-hidden rounded-[38px] border border-black/10 bg-[#FFF3EA] shadow-[0_20px_55px_rgba(32,33,36,0.12)]">
-                <div className="border-b border-black/10 px-5 py-4 md:px-7">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <span className="text-xs font-bold uppercase tracking-[0.2em]">Interactive translator preview</span>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2 text-xs font-black">
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-black" />
-                        Demo mode
+              <div className="bg-[#FFF6EF] p-6 md:p-10 lg:p-14">
+                <div className="mx-auto max-w-lg">
+                  <div className="mb-4 flex items-center justify-between gap-4">
+                    <div>
+                      <div className="text-xs font-bold uppercase tracking-[0.16em] text-black/40">
+                        Live preview
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setAutoDemo((value) => !value)}
-                        className={`rounded-full border border-black/15 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.14em] transition ${
-                          autoDemo ? "bg-[#25262A] text-white" : "bg-[#FFF6EF] hover:bg-white"
-                        }`}
-                        aria-pressed={autoDemo}
-                      >
-                        Auto {autoDemo ? "on" : "off"}
-                      </button>
+                      <div className="mt-1 text-sm font-semibold">
+                        {activeDemo.mode}
+                      </div>
                     </div>
+
+                    <span className="flex items-center gap-2 text-xs font-semibold">
+                      <span className="h-2 w-2 rounded-full bg-[#F67A16]" />
+                      {status}
+                    </span>
                   </div>
-                </div>
 
-                <div className="grid min-h-[520px] md:grid-cols-[1fr_1.1fr]">
-                  <div className="border-b border-black/10 p-6 md:border-b-0 md:border-r-2 md:p-8">
-                    <div className="text-xs font-bold uppercase tracking-[0.18em] text-black/50">Choose a sample</div>
-                    <div className="mt-5 space-y-3">
-                      {demos.map((demo) => {
-                        const active = activeDemo.id === demo.id;
-                        return (
-                          <button
-                            type="button"
-                            key={demo.id}
-                            onClick={() => setActiveDemo(demo)}
-                            className={`group flex w-full items-center justify-between rounded-3xl border border-black/10 p-4 text-left transition-all ${
-                              active
-                                ? "bg-[#FFF0E4] text-[#202124] shadow-sm"
-                                : "bg-[#FFF9F5] hover:bg-white"
-                            }`}
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className={`grid h-14 w-14 place-items-center rounded-2xl text-xl font-black ${active ? "bg-[#F67A16]" : "bg-white"}`}>
-                                {demo.label.slice(0, 1)}
-                              </div>
-                              <div>
-                                <div className="font-black">{demo.label}</div>
-                                <div className={`mt-1 text-xs font-bold ${active ? "text-black/45" : "text-black/45"}`}>
-                                  {demo.helper}
-                                </div>
-                              </div>
-                            </div>
-                            <ArrowUpRight />
-                          </button>
-                        );
-                      })}
+                  <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-[28px] bg-[#202124]">
+                    <div className="absolute inset-5 rounded-[22px] border border-white/10" />
+
+                    <span className="absolute left-5 top-5 h-5 w-5 border-l border-t border-[#F67A16]/60" />
+                    <span className="absolute right-5 top-5 h-5 w-5 border-r border-t border-[#F67A16]/60" />
+                    <span className="absolute bottom-5 left-5 h-5 w-5 border-b border-l border-[#F67A16]/60" />
+                    <span className="absolute bottom-5 right-5 h-5 w-5 border-b border-r border-[#F67A16]/60" />
+
+                    {isDynamic && (
+                      <div className="absolute inset-0 z-0">
+                        <FaceGuide />
+                      </div>
+                    )}
+
+                    <div className="relative z-10 h-[88%] w-[88%]">
+                      <AnimatedHand
+                        pose={currentPose}
+                        detecting={status !== "DETECTED"}
+                      />
                     </div>
 
-                    <div className="mt-6 overflow-hidden rounded-2xl border border-black/10 bg-[#202124] py-2 text-white">
-                      <div className="signsight-ticker flex w-max gap-8 whitespace-nowrap px-4 text-[9px] font-bold uppercase tracking-[0.2em] text-white/55">
-                        <span>FSL · CAMERA TRACKING · {activeDemo.result} · LIVE PREVIEW ·</span>
-                        <span>FSL · CAMERA TRACKING · {activeDemo.result} · LIVE PREVIEW ·</span>
-                      </div>
+                    {status === "DETECTING" && (
+                      <div className="scan-line absolute inset-x-6 z-20 h-px bg-[#F67A16] shadow-[0_0_12px_rgba(246,122,22,.7)]" />
+                    )}
+
+                    <div className="absolute bottom-5 left-1/2 z-30 -translate-x-1/2 rounded-full bg-black/35 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.14em] text-white/70 backdrop-blur">
+                      {isDynamic
+                        ? `Face guide · Frame ${frameIndex + 1} / ${frames.length}`
+                        : "21 landmarks"}
                     </div>
                   </div>
 
-                  <div className="relative flex min-h-[420px] items-center justify-center overflow-hidden bg-[#FFF6EF] p-7 md:p-10">
-                    <div className="absolute inset-0 opacity-[0.16] [background-image:radial-gradient(#202124_1px,transparent_1px)] [background-size:18px_18px]" />
-                    <div className="relative w-full max-w-md rounded-[34px] border border-black/10 bg-white p-5 shadow-[0_14px_36px_rgba(32,33,36,0.10)]">
-                      <div className="flex items-center justify-between border-b border-black/10 pb-4">
-                        <div>
-                          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-black/35">Current mode</div>
-                          <div className="mt-1 font-black">{activeDemo.mode}</div>
-                        </div>
-                        <span className="rounded-full bg-[#F67A16]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#A84D08]">Live preview</span>
-                      </div>
-
-                      <div
-                        onMouseMove={handleTrackingMove}
-                        onClick={triggerDetection}
-                        className="group relative my-5 grid aspect-[4/3] cursor-crosshair place-items-center overflow-hidden rounded-[26px] bg-[#202124]"
-                        title="Move your pointer to simulate tracking. Click to detect the next sample."
-                      >
-                        <div className="absolute left-4 top-4 z-20 rounded-full border border-white/15 bg-black/35 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-white/60 backdrop-blur">
-                          Move pointer · Click to detect
-                        </div>
-                        <div className="relative grid h-[76%] w-[76%] place-items-center rounded-[24px] border border-[#F67A16]/40 bg-[#2D2F33] transition duration-300 group-hover:border-[#F67A16] group-hover:shadow-[0_0_30px_rgba(246,122,22,.10)]">
-                          <IconImg src="/icons/hero-hand.png" alt="FSL hand sign preview" className="h-28 w-28 object-contain transition duration-300 group-hover:scale-105" />
-                          <div className="absolute inset-x-0 h-px bg-[#F67A16] shadow-[0_0_10px_rgba(246,122,22,.28)] signsight-scan" />
+                  <div className="mt-6 border-t border-black/10 pt-5">
+                    <div className="flex items-end justify-between gap-5">
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-[0.15em] text-black/40">
+                          Detected
                         </div>
 
                         <div
-                          className="pointer-events-none absolute z-30 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#F67A16] transition-[left,top] duration-75"
-                          style={{ left: `${trackingPoint.x}%`, top: `${trackingPoint.y}%` }}
+                          key={`${activeDemo.id}-${cycle}`}
+                          className="result-in mt-1 text-5xl font-black tracking-[-0.05em]"
                         >
-                          <span className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#F67A16] shadow-[0_0_8px_rgba(246,122,22,.28)]" />
-                          <span className="absolute left-1/2 top-1/2 h-px w-16 -translate-x-1/2 -translate-y-1/2 bg-[#F67A16]/45" />
-                          <span className="absolute left-1/2 top-1/2 h-16 w-px -translate-x-1/2 -translate-y-1/2 bg-[#F67A16]/45" />
+                          {activeDemo.result}
                         </div>
-
-                        {detectionBurst > 0 && (
-                          <span
-                            key={detectionBurst}
-                            className="signsight-pop pointer-events-none absolute z-20 h-24 w-24 rounded-full border-2 border-[#F67A16]"
-                            style={{ left: `${trackingPoint.x}%`, top: `${trackingPoint.y}%` }}
-                          />
-                        )}
                       </div>
 
-                      <div key={activeDemo.id} className="rounded-[24px] border border-[#F67A16]/15 bg-[#FFF5EE] p-5 transition-all">
-                        <div className="flex items-end justify-between gap-5">
-                          <div>
-                            <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-black/45">Detected result</div>
-                            <div className="mt-1 text-4xl font-black tracking-[-0.05em]">{activeDemo.result}</div>
-                          </div>
-                          <div className="rounded-full border-2 border-black px-3 py-1 text-[9px] font-bold uppercase tracking-[0.15em]">FSL</div>
-                        </div>
+                      <div className="rounded-full border border-black/15 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.14em]">
+                        FSL
                       </div>
                     </div>
+
+                    {isDynamic && (
+                      <div className="mt-5 h-1 overflow-hidden rounded-full bg-black/10">
+                        <div
+                          className="h-full rounded-full bg-[#F67A16] transition-[width] duration-100"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -743,131 +798,143 @@ export default function SignSightDownloadPage() {
           </div>
         </section>
 
-        <section id="features" className="bg-[#202124] px-6 py-24 text-white md:px-8 lg:py-32">
+        <section
+          id="features"
+          className="scroll-mt-20 bg-[#202124] px-6 py-24 text-white md:px-8 lg:py-32"
+        >
           <div className="mx-auto max-w-7xl">
-            <div className="mb-14 flex flex-col justify-between gap-7 md:flex-row md:items-end">
-              <div>
-                <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-[#F67A16]">What’s inside</div>
-                <h2 className="max-w-3xl text-5xl font-extrabold leading-[0.95] tracking-[-0.055em] md:text-7xl">
-                  Built around real-time signing.
-                </h2>
+            <div className="mb-14 max-w-3xl">
+              <div className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#F67A16]">
+                Features
               </div>
-              <p className="max-w-sm text-sm font-medium leading-6 text-white/45">
-                Four focused tools work together to make recognition, learning, and feedback feel simple.
-              </p>
+
+              <h2 className="text-5xl font-extrabold leading-[0.95] tracking-[-0.055em] md:text-7xl">
+                Made for simple,
+                <span className="text-[#F67A16]">
+                  {" "}
+                  accessible communication.
+                </span>
+              </h2>
             </div>
 
-            <div className="grid overflow-hidden rounded-[36px] border border-white/10 lg:grid-cols-2">
-              {featureCards.map((feature, index) => (
+            <div className="grid border-t border-white/15 md:grid-cols-2">
+              {features.map((feature, index) => (
                 <article
                   key={feature.title}
-                  className={`group relative min-h-[320px] overflow-hidden border-white/15 p-7 transition duration-500 hover:bg-[#292B2F] md:p-10 before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:origin-left before:scale-x-0 before:bg-[#F67A16] before:transition-transform before:duration-300 hover:before:scale-x-100 ${
-                    index % 2 === 0 ? "lg:border-r" : ""
-                  } ${index < 2 ? "border-b" : index === 2 ? "border-b lg:border-b-0" : ""}`}
+                  className={`border-b border-white/15 py-9 md:p-9 ${
+                    index % 2 === 0 ? "md:border-r" : ""
+                  }`}
                 >
-                  <div className="absolute right-[-20px] top-[-34px] text-[150px] font-black leading-none tracking-[-0.09em] text-white/[0.035] transition group-hover:text-white/[0.06]">
-                    {feature.number}
-                  </div>
-                  <div className="relative flex h-full flex-col justify-between gap-16">
-                    <div className="flex items-start justify-between">
-                      <div className="grid h-20 w-20 place-items-center rounded-[22px] bg-white p-2 text-black transition duration-300 group-hover:scale-105 group-hover:bg-[#FFF2E8] group-hover:shadow-sm">
-                        <IconImg src={feature.icon} alt={feature.title} className="h-full w-full object-contain" />
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-bold uppercase tracking-[0.18em] text-white/35 group-hover:text-white/55">{feature.number}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="text-3xl font-black tracking-[-0.04em] md:text-4xl">{feature.title}</h3>
-                      <p className="mt-4 max-w-lg text-sm font-medium leading-6 text-white/50 transition group-hover:text-white/70 md:text-base">
-                        {feature.desc}
-                      </p>
-                    </div>
-                  </div>
+                  <img
+                    src={feature.icon}
+                    alt=""
+                    className="mb-7 h-14 w-14 rounded-xl bg-white object-contain p-1"
+                  />
+
+                  <h3 className="text-2xl font-bold tracking-[-0.035em]">
+                    {feature.title}
+                  </h3>
+
+                  <p className="mt-3 max-w-md text-sm leading-6 text-white/50">
+                    {feature.description}
+                  </p>
                 </article>
               ))}
             </div>
           </div>
         </section>
 
-        <section id="download" className="relative overflow-hidden border-t border-[#F67A16]/10 bg-[#FFFAF6] px-6 py-24 md:px-8 lg:py-32">
-          <div className="pointer-events-none absolute inset-0 opacity-[0.055] [background-image:linear-gradient(to_right,#202124_1px,transparent_1px),linear-gradient(to_bottom,#202124_1px,transparent_1px)] [background-size:42px_42px]" />
-          <div className="relative mx-auto max-w-7xl">
-            <div className="grid items-end gap-12 lg:grid-cols-[1.15fr_.85fr]">
-              <div>
-                <div className="mb-5 inline-flex rounded-full border border-[#F67A16]/25 bg-[#FFF2E8] px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-[#A84D08]">
-                  Android download
-                </div>
-                <h2 className="max-w-4xl text-[clamp(3.8rem,8vw,7.5rem)] font-extrabold leading-[0.84] tracking-[-0.075em]">
-                  TAKE
-                  <span className="block">SIGNSIGHT</span>
-                  <span className="block text-[#F67A16]">WITH YOU.</span>
-                </h2>
+        <section
+          id="download"
+          className="scroll-mt-20 px-6 py-24 md:px-8 lg:py-32"
+        >
+          <div className="mx-auto grid max-w-7xl items-end gap-14 lg:grid-cols-[1.2fr_.8fr]">
+            <div>
+              <div className="mb-5 text-xs font-bold uppercase tracking-[0.2em] text-[#D95F05]">
+                Get SignSight
               </div>
 
-              <div className="rounded-[34px] border border-black/10 bg-[#FFF9F5] p-5 shadow-[0_18px_50px_rgba(32,33,36,0.10)] md:p-7">
-                <div className="flex items-center gap-4 border-b border-black/10 pb-5">
-                  <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[#202124]">
-                    <IconImg src="/icons/android.png" alt="Android" className="h-7 w-7 object-contain brightness-0 invert" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold uppercase tracking-[0.16em] text-black/45">Available platform</div>
-                    <div className="mt-1 text-2xl font-black">Android</div>
-                  </div>
+              <h2 className="text-[clamp(4rem,8vw,7.5rem)] font-extrabold leading-[0.84] tracking-[-0.075em]">
+                TAKE
+                <span className="block">SIGNSIGHT</span>
+                <span className="block text-[#F67A16]">WITH YOU.</span>
+              </h2>
+            </div>
+
+            <div className="border-t border-black/15 pt-7">
+              <div className="flex items-center gap-4">
+                <div className="grid h-12 w-12 place-items-center rounded-full bg-[#202124]">
+                  <img
+                    src="/icons/android.png"
+                    alt="Android"
+                    className="h-6 w-6 object-contain brightness-0 invert"
+                  />
                 </div>
 
-                <div className="grid gap-3 py-5 text-sm font-bold sm:grid-cols-2">
-                  <div className="rounded-2xl bg-white px-4 py-3">
-                    <div className="text-[10px] uppercase tracking-[0.16em] text-black/35">App</div>
-                    <div className="mt-1">SignSight</div>
+                <div>
+                  <div className="text-xs font-semibold text-black/40">
+                    Available for
                   </div>
-                  <div className="rounded-2xl bg-white px-4 py-3">
-                    <div className="text-[10px] uppercase tracking-[0.16em] text-black/35">Status</div>
-                    <div className="mt-1">Ready to install</div>
-                  </div>
+                  <div className="font-bold">Android</div>
                 </div>
+              </div>
 
-                <a
-                  href="#"
-                  className="flex h-16 w-full items-center justify-between rounded-2xl bg-[#F67A16] px-5 font-semibold text-white shadow-[0_10px_24px_rgba(246,122,22,.18)] transition hover:bg-[#E9650A]"
-                >
-                  <span className="flex items-center gap-3">
-                    <IconImg src="/icons/download.png" alt="Download" className="h-5 w-5 object-contain brightness-0 invert" />
-                    Download APK
-                  </span>
-                  <ArrowUpRight />
-                </a>
+              <p className="mt-6 max-w-md text-sm leading-6 text-black/50">
+                Install SignSight on your Android device and start exploring
+                supported Filipino Sign Language recognition.
+              </p>
 
-                <div className="mt-4 flex items-center justify-between gap-4 text-xs font-bold text-black/45">
-                  <span>iOS version in development</span>
-                  <span>SignSight</span>
-                </div>
+              <a
+                href="#"
+                className="mt-7 flex w-full items-center justify-between rounded-full bg-[#F67A16] px-6 py-4 font-semibold text-white transition hover:bg-[#E9650A]"
+              >
+                <span className="flex items-center gap-3">
+                  <img
+                    src="/icons/download.png"
+                    alt=""
+                    className="h-5 w-5 brightness-0 invert"
+                  />
+                  Download APK
+                </span>
+
+                <ArrowUpRight />
+              </a>
+
+              <div className="mt-4 text-xs font-medium text-black/40">
+                iOS version in development
               </div>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="bg-[#202124] px-6 py-10 text-white md:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 md:flex-row md:items-center">
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-full bg-[#F67A16]">
-              <IconImg src="/icons/logo.png" alt="SignSight" className="h-6 w-6 object-contain" />
-            </div>
-            <div>
-              <div className="font-extrabold">SignSight</div>
-              <div className="mt-1 text-xs font-bold text-white/35">Camera-based FSL translator</div>
-            </div>
+      <footer className="border-t border-black/10 px-6 py-8 md:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-5 text-sm md:flex-row md:items-center">
+          <div className="flex items-center gap-3 font-bold">
+            <img
+              src="/icons/logo.png"
+              alt="SignSight"
+              className="h-8 w-8 object-contain"
+            />
+            SignSight
           </div>
 
-          <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-white/55">
-            <a href="#experience" className="transition hover:text-white">Experience</a>
-            <a href="#features" className="transition hover:text-white">Features</a>
-            <a href="#download" className="transition hover:text-white">Download</a>
-            <a href="#" className="transition hover:text-white">GitHub</a>
+          <div className="flex flex-wrap gap-6 text-black/45">
+            <a href="#experience" className="hover:text-black">
+              Experience
+            </a>
+            <a href="#features" className="hover:text-black">
+              Features
+            </a>
+            <a href="/plans" className="hover:text-black">
+              Plans
+            </a>
+            <a href="#download" className="hover:text-black">
+              Download
+            </a>
           </div>
 
-          <p className="text-xs font-bold text-white/30">© 2026 SignSight</p>
+          <span className="text-xs text-black/35">© 2026 SignSight</span>
         </div>
       </footer>
     </div>
