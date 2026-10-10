@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Platform } from "react-native";
 import { useFrameProcessor } from "react-native-vision-camera";
 import { Worklets, useSharedValue } from "react-native-worklets-core";
 
@@ -18,6 +19,37 @@ type UseStreamingHandTrackingOptions = {
 };
 
 const HAND_PRESENCE_GRACE_MS = 400;
+
+function normalizeHandOrientation(
+  result: HandTrackingFrameResult
+): HandTrackingFrameResult {
+  if (Platform.OS !== "ios") {
+    return result;
+  }
+
+  const rotateLandmarks = (
+    landmarks: HandTrackingFrameResult["landmarks"]
+  ) => {
+    if (!landmarks) {
+      return landmarks;
+    }
+
+    return landmarks.map((point) => ({
+      ...point,
+      x: 1 - point.y,
+      y: point.x,
+    }));
+  };
+
+  return {
+    ...result,
+    landmarks: rotateLandmarks(result.landmarks),
+    hands: result.hands?.map((hand) => ({
+      ...hand,
+      landmarks: rotateLandmarks(hand.landmarks) ?? [],
+    })),
+  };
+}
 
 function normalizeUpperBody(
   upperBody: HandTrackingFrameResult["upperBody"]
@@ -44,6 +76,9 @@ function normalizeUpperBody(
 
   return upperBody as UpperBodyLandmarks;
 }
+
+
+
 
 export type StreamingHandTrackingDebugState = {
   hasHand: boolean;
@@ -91,20 +126,24 @@ export function useStreamingHandTracking({
           return;
         }
 
-        const normalizedUpperBody = normalizeUpperBody(result.upperBody);
-        const normalizedResult: HandTrackingFrameResult = {
-          ...result,
-          upperBody: normalizedUpperBody,
-          hasUpperBody: result.hasUpperBody && !!normalizedUpperBody,
-        };
+        const orientationNormalizedResult =
+  normalizeHandOrientation(result);
 
-        if (
-          result.timestampMs === lastTimestampRef.current &&
-          normalizedResult.hasHand === latestHandFrame?.hasHand &&
-          normalizedResult.hasUpperBody === latestHandFrame?.hasUpperBody
-        ) {
-          return;
-        }
+  const normalizedUpperBody = normalizeUpperBody(
+    orientationNormalizedResult.upperBody
+  );
+
+  const normalizedResult: HandTrackingFrameResult = {
+    ...orientationNormalizedResult,
+    upperBody: normalizedUpperBody,
+    hasUpperBody:
+      orientationNormalizedResult.hasUpperBody &&
+      !!normalizedUpperBody,
+  };
+
+  if (result.timestampMs === lastTimestampRef.current) {
+    return;
+  }
 
         const previousTimestamp = lastTimestampRef.current;
         const approxFps =
@@ -187,7 +226,9 @@ export function useStreamingHandTracking({
           approxFps,
         });
       }),
-    [latestHandFrame?.hasHand]
+    []
+
+
   );
 
   useEffect(() => {

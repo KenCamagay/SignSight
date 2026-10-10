@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.app",
+      "bundleIdentifier": "com.kencamagay.signsight",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow access to your photos to attach images.",
         "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera",
@@ -55,7 +55,8 @@
           "enableFrameProcessors": true
         }
       ],
-      "expo-image-picker"
+      "expo-image-picker",
+      "expo-font"
     ]
   }
 }

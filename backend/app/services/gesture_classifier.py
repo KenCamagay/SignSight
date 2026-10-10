@@ -117,6 +117,7 @@ def upload_gesture(
     signer_id: str | None = None,
     capture_session_id: str | None = None,
     device_id: str | None = None,
+    platform: str | None = None,
     camera_position: str | None = None,
     accepted: bool | None = None,
     review_status: str | None = None,
@@ -149,6 +150,12 @@ def upload_gesture(
                     if isinstance(capture_session_id, str)
                     else None,
                     "device_id": device_id.strip() if isinstance(device_id, str) else None,
+                    "platform": (
+                        platform.strip().lower()
+                        if isinstance(platform, str)
+                        and platform.strip().lower() in {"ios", "android"}
+                        else None
+                    ),
                     "camera_position": camera_position,
                     "accepted": accepted,
                     "review_status": review_status,

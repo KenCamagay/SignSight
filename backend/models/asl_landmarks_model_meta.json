@@ -1,6 +1,7 @@
 {
-  "version_id": "landmarks_bootstrap_20260405T035749Z",
-  "label": "Signsight S2",
+  "version_id": "landmarks_bootstrap_20260921T071502Z",
+  "label": "Ios",
+  "note": "Complete",
   "training_mode": "bootstrap",
   "accuracy": 1.0,
   "active_static_letters": [
@@ -10,16 +11,21 @@
     "D",
     "E",
     "F",
+    "G",
+    "H",
     "I",
+    "K",
+    "L",
     "M",
-    "N",
     "O",
+    "Q",
     "R",
     "S",
     "T",
     "U",
     "V",
     "W",
+    "X",
     "Y"
   ],
   "active_static_word_labels": [
@@ -32,93 +38,68 @@
     "D",
     "E",
     "F",
+    "G",
+    "H",
     "I",
+    "K",
+    "L",
     "M",
-    "N",
     "O",
+    "Q",
     "R",
     "S",
     "T",
     "U",
     "V",
     "W",
+    "X",
     "Y"
   ],
   "ready_static_word_labels": [
     "I_LOVE_YOU"
   ],
   "unready_static_letters": [
-    "G",
-    "H",
-    "K",
-    "L",
-    "P",
-    "Q",
-    "X"
+    "N",
+    "P"
   ],
   "deficits_by_label": {
-    "G": [
-      "G: approved 0/40",
-      "G: Left hand 0/20",
-      "G: Right hand 0/20",
-      "G: signers 0/1"
-    ],
-    "H": [
-      "H: approved 0/40",
-      "H: Left hand 0/20",
-      "H: Right hand 0/20",
-      "H: signers 0/1"
-    ],
-    "K": [
-      "K: approved 0/40",
-      "K: Left hand 0/20",
-      "K: Right hand 0/20",
-      "K: signers 0/1"
-    ],
-    "L": [
-      "L: approved 0/40",
-      "L: Left hand 0/20",
-      "L: Right hand 0/20",
-      "L: signers 0/1"
+    "N": [
+      "N: approved 0/40",
+      "N: Left hand 0/20",
+      "N: Right hand 0/20",
+      "N: signers 0/1"
     ],
     "P": [
       "P: approved 0/40",
       "P: Left hand 0/20",
       "P: Right hand 0/20",
       "P: signers 0/1"
-    ],
-    "Q": [
-      "Q: approved 0/40",
-      "Q: Left hand 0/20",
-      "Q: Right hand 0/20",
-      "Q: signers 0/1"
-    ],
-    "X": [
-      "X: approved 0/40",
-      "X: Left hand 0/20",
-      "X: Right hand 0/20",
-      "X: signers 0/1"
     ]
   },
-  "trained_at": "2026-04-05T03:57:49+00:00",
+  "trained_at": "2026-09-21T07:15:02+00:00",
   "training_sample_counts": {
-    "A": 189,
-    "B": 212,
-    "C": 239,
-    "D": 63,
-    "E": 147,
-    "F": 203,
-    "I": 176,
-    "M": 198,
-    "N": 358,
-    "O": 242,
-    "R": 194,
-    "S": 280,
-    "T": 265,
-    "U": 90,
-    "V": 207,
-    "W": 191,
-    "Y": 100,
+    "A": 1141,
+    "B": 1110,
+    "C": 994,
+    "D": 1715,
+    "E": 2776,
+    "F": 532,
+    "G": 987,
+    "H": 1180,
+    "I": 991,
+    "K": 1555,
+    "L": 1149,
+    "M": 602,
+    "O": 897,
+    "Q": 1179,
+    "R": 916,
+    "S": 926,
+    "T": 542,
+    "U": 853,
+    "V": 1150,
+    "W": 553,
+    "X": 1134,
+    "Y": 700,
     "I_LOVE_YOU": 296
   },
   "quotas_used": {
