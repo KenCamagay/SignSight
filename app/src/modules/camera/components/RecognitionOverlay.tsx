@@ -58,6 +58,8 @@ export function RecognitionOverlay({
   targetLabel,
   targetOptions,
   onTargetSelect,
+  onAddTarget,
+  allowCustomTargets = false,
   modeValue,
   onModeChange,
   modelLabel,
@@ -82,6 +84,8 @@ export function RecognitionOverlay({
   targetLabel?: string;
   targetOptions?: string[];
   onTargetSelect?: (value: string) => void;
+  onAddTarget?: (value: string) => void;
+  allowCustomTargets?: boolean;
   modeValue?: "letters" | "words";
   onModeChange?: (value: "letters" | "words") => void;
   modelLabel?: string;
@@ -100,6 +104,7 @@ export function RecognitionOverlay({
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [openPicker, setOpenPicker] = useState<"target" | "model" | null>(null);
+  const [newTarget, setNewTarget] = useState("");
   const showDetails = !collapsible || expanded;
   const showMetadataInputs =
     (!collapsible || expanded) && (onSignerIdChange != null || onVariantTagChange != null);
@@ -237,6 +242,40 @@ export function RecognitionOverlay({
                     </Pressable>
                   );
                 })}
+                {allowCustomTargets ? (
+                  <View style={styles.addTargetRow}>
+                    <TextInput
+                      value={newTarget}
+                      onChangeText={setNewTarget}
+                      placeholder="Add a word or phrase"
+                      placeholderTextColor={TEXT_SECONDARY}
+                      autoCapitalize="words"
+                      returnKeyType="done"
+                      onSubmitEditing={() => {
+                        const normalized = newTarget.trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "");
+                        if (!normalized) return;
+                        onAddTarget?.(normalized);
+                        setNewTarget("");
+                        setOpenPicker(null);
+                      }}
+                      style={styles.addTargetInput}
+                    />
+                    <Pressable
+                      accessibilityRole="button"
+                      style={styles.addTargetButton}
+                      onPress={(event) => {
+                        event.stopPropagation();
+                        const normalized = newTarget.trim().toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "");
+                        if (!normalized) return;
+                        onAddTarget?.(normalized);
+                        setNewTarget("");
+                        setOpenPicker(null);
+                      }}
+                    >
+                      <Text style={styles.addTargetButtonText}>Add</Text>
+                    </Pressable>
+                  </View>
+                ) : null}
               </View>
             ) : null}
           </Pressable>
@@ -466,6 +505,34 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: SPACING.SPACE_XS,
     marginTop: SPACING.SPACE_SM,
+  },
+  addTargetRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.SPACE_XS,
+    width: "100%",
+    marginTop: SPACING.SPACE_XS,
+  },
+  addTargetInput: {
+    flex: 1,
+    minHeight: 40,
+    paddingHorizontal: SPACING.SPACE_SM,
+    borderRadius: RADIUS_MD,
+    color: "#FFFFFF",
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  addTargetButton: {
+    minHeight: 40,
+    paddingHorizontal: SPACING.SPACE_MD,
+    borderRadius: RADIUS_MD,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: ACCENT,
+  },
+  addTargetButtonText: {
+    color: "#FFFFFF",
+    fontSize: TYPOGRAPHY.TEXT_XS,
+    fontWeight: "800",
   },
   optionChip: {
     paddingHorizontal: SPACING.SPACE_SM,

@@ -48,6 +48,7 @@ type GestureHealthResponse = {
   trained_gestures?: boolean;
   trained_gestures_legacy?: boolean;
   trained_gestures_v2?: boolean;
+  gesture_labels?: string[];
 };
 
 function normalizeModelsResponse(rawModels: any[]): ModelItem[] {
@@ -191,6 +192,7 @@ function CaptureTabScreen({
   const isSmall = width < 360;
   const isTablet = width >= 768;
   const [isWordRecording, setIsWordRecording] = useState(false);
+  const [customWordLabels, setCustomWordLabels] = useState<string[]>([]);
   const cameraRuntime = useCameraRuntime();
   const recognitionRuntime = useRecognitionRuntime({
     enabled:
@@ -230,18 +232,21 @@ function CaptureTabScreen({
   const currentTargets =
     mode === "letters"
       ? [...ASL_LABELS]
-      : [
-          "HELLO",
-          "THANK_YOU",
-          "PLEASE",
-          "SORRY",
-          "YES",
-          "NO",
-          "HELP",
-          "I_LOVE_YOU",
-          "WHERE",
-          "GOODBYE",
-        ];
+      : Array.from(new Set([
+          ...(gestureHealth?.gesture_labels ?? [
+            "HELLO",
+            "THANK_YOU",
+            "PLEASE",
+            "SORRY",
+            "YES",
+            "NO",
+            "HELP",
+            "I_LOVE_YOU",
+            "WHERE",
+            "GOODBYE",
+          ]),
+          ...customWordLabels,
+        ]));
   const selectedModelInfo = selectedModel?.rawInfo ?? {};
   const sampleCount =
     normalizedTarget !== "None"
@@ -659,6 +664,11 @@ function CaptureTabScreen({
         targetLabel={normalizedTarget}
         targetOptions={currentTargets}
         onTargetSelect={onSelectLabel}
+        onAddTarget={(value) => {
+          setCustomWordLabels((labels) => labels.includes(value) ? labels : [...labels, value]);
+          onSelectLabel(value);
+        }}
+        allowCustomTargets={mode === "words"}
         modeValue={mode}
         onModeChange={onModeChange}
         modelLabel={displayModelLabel}

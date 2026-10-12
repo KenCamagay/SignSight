@@ -1,4 +1,5 @@
 import json
+import re
 
 import joblib
 import numpy as np
@@ -13,6 +14,15 @@ from app.ml.gestures import gesture_to_vec, gesture_v2_to_vec
 
 gesture_model: SVC | None = None
 gesture_model_v2: SVC | None = None
+
+
+def available_gesture_labels() -> list[str]:
+    labels = set(GESTURE_LABELS)
+    for path in GESTURES_DIR.glob("*.jsonl"):
+        label = path.stem
+        if re.fullmatch(r"[A-Z0-9]+(?:_[A-Z0-9]+)*", label):
+            labels.add(label)
+    return sorted(labels)
 
 
 def _iter_gesture_records(label: str):
@@ -70,7 +80,7 @@ def _is_hand_only_gesture_record(obj: dict) -> bool:
 
 def load_legacy_gesture_dataset():
     X, y = [], []
-    for label in GESTURE_LABELS:
+    for label in available_gesture_labels():
         path = GESTURES_DIR / f"{label}.jsonl"
         if not path.exists():
             continue
@@ -94,7 +104,7 @@ def load_legacy_gesture_dataset():
 
 def load_gesture_v2_dataset():
     X, y = [], []
-    for label in GESTURE_LABELS:
+    for label in available_gesture_labels():
         path = GESTURES_DIR / f"{label}.jsonl"
         if not path.exists():
             continue
@@ -134,8 +144,8 @@ def upload_gesture(
     variant_tags: list[str] | None = None,
     captured_at: str | None = None,
 ) -> dict:
-    normalized_label = label.strip().upper()
-    if normalized_label not in GESTURE_LABELS:
+    normalized_label = re.sub(r"\s+", "_", label.strip().upper())
+    if not re.fullmatch(r"[A-Z0-9]+(?:_[A-Z0-9]+)*", normalized_label):
         return {"ok": False, "error": f"Invalid label: {normalized_label}"}
     if review_status == "approved":
         if not signer_id or not signer_id.strip():
@@ -302,8 +312,8 @@ def gesture_label_summary(
     capture_session_id: str | None = None,
     signer_id: str | None = None,
 ) -> dict:
-    normalized_label = label.strip().upper()
-    if normalized_label not in GESTURE_LABELS:
+    normalized_label = re.sub(r"\s+", "_", label.strip().upper())
+    if normalized_label not in available_gesture_labels():
         return {"ok": False, "error": f"Invalid label: {normalized_label}"}
 
     normalized_session_id = capture_session_id.strip() if isinstance(capture_session_id, str) and capture_session_id.strip() else None
@@ -355,7 +365,8 @@ def health_summary() -> dict:
     gesture_total = 0
     gesture_signer_ids: set[str] = set()
     gesture_v2_total = 0
-    for label in GESTURE_LABELS:
+    gesture_labels = available_gesture_labels()
+    for label in gesture_labels:
         stats = {
             "approved": 0,
             "pending": 0,
@@ -393,7 +404,7 @@ def health_summary() -> dict:
         "trained_gestures": GESTURE_MODEL_PATH.exists() or GESTURE_MODEL_V2_PATH.exists(),
         "trained_gestures_legacy": GESTURE_MODEL_PATH.exists(),
         "trained_gestures_v2": GESTURE_MODEL_V2_PATH.exists(),
-        "gesture_labels": GESTURE_LABELS,
+        "gesture_labels": gesture_labels,
         "gesture_total": gesture_total,
         "gesture_v2_total": gesture_v2_total,
         "gesture_unique_signers": len(gesture_signer_ids),
