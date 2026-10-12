@@ -28,22 +28,23 @@ class SchemaTests(unittest.TestCase):
                 camera_position="side",
             )
 
-    def test_gesture_v2_frame_parses_nested_upper_body(self):
+    def test_gesture_v2_frame_parses_two_hands(self):
         from app.schemas.ml import GestureV2FrameReq
 
         frame = GestureV2FrameReq(
-            handLandmarks=[{"x": 0, "y": 0, "z": 0}],
+            hands=[
+                {
+                    "landmarks": [{"x": 0, "y": 0, "z": 0}],
+                    "handedness": "Right",
+                }
+            ],
             handedness="Right",
-            upperBody={
-                "leftShoulder": {"x": 0.4, "y": 0.3, "z": 0, "visibility": 0.9},
-                "rightShoulder": {"x": 0.6, "y": 0.3, "z": 0, "visibility": 0.9},
-            },
             timestampMs=123.4,
         )
 
         self.assertEqual(frame.handedness, "Right")
         self.assertEqual(frame.timestampMs, 123.4)
-        self.assertIsNotNone(frame.upperBody.leftShoulder)
+        self.assertEqual(frame.hands[0].handedness, "Right")
 
     def test_train_landmarks_requires_label_and_note(self):
         from app.schemas.ml import TrainLandmarksReq

@@ -228,7 +228,7 @@ export function useStreamingHandTracking({
       const result = detectHands(frame, {
         minProcessIntervalMs: intervalMs,
         maxResultAgeMs: 450,
-        runPoseLandmarker: detectMode === "WORDS",
+        runPoseLandmarker: false,
       });
 
       if (result) {

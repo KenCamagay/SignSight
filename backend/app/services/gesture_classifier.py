@@ -97,6 +97,8 @@ def load_gesture_v2_dataset():
                 frames_v2 = obj.get("framesV2")
                 if not isinstance(frames_v2, list) or len(frames_v2) == 0:
                     continue
+                if not all(isinstance(frame, dict) and isinstance(frame.get("hands"), list) for frame in frames_v2):
+                    continue
                 X.append(gesture_v2_to_vec(frames_v2))
                 y.append(obj["label"])
             except Exception:
@@ -170,6 +172,17 @@ def train_gesture_model() -> dict:
     global gesture_model, gesture_model_v2
     X_v2, y_v2 = load_gesture_v2_dataset()
     if len(X_v2) > 0:
+        labels = sorted(set(str(label) for label in y_v2))
+        if len(labels) < 2:
+            return {
+                "ok": False,
+                "error": (
+                    "At least two gesture labels are required to train a classifier. "
+                    f"Currently approved Gesture V2 data contains: {labels[0] if labels else 'none'}."
+                ),
+                "schema": "gesture_v2",
+                "available_labels": labels,
+            }
         Xtr, Xte, ytr, yte = train_test_split(
             X_v2, y_v2, test_size=0.2, random_state=42, stratify=y_v2
         )
@@ -188,6 +201,18 @@ def train_gesture_model() -> dict:
         gesture_model = None
         gesture_model_v2 = None
         return {"ok": False, "error": "No gesture samples yet"}
+
+    labels = sorted(set(str(label) for label in y))
+    if len(labels) < 2:
+        return {
+            "ok": False,
+            "error": (
+                "At least two gesture labels are required to train a classifier. "
+                f"Currently approved legacy data contains: {labels[0] if labels else 'none'}."
+            ),
+            "schema": "legacy",
+            "available_labels": labels,
+        }
 
     Xtr, Xte, ytr, yte = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
@@ -229,10 +254,18 @@ def predict_gesture(
                     "label": "GESTURE_V2_NOT_READY",
                     "confidence": 0.0,
                     "ok": False,
-                    "error": "Gesture V2 model is not trained yet.",
+                    "error": "Hand-only gesture model is not trained yet. Recapture gestures after the hand-only format change.",
                 }
 
         vec = gesture_v2_to_vec(frames_v2).reshape(1, -1)
+        expected_features = getattr(gesture_model_v2, "n_features_in_", vec.shape[1])
+        if expected_features != vec.shape[1]:
+            return {
+                "label": "GESTURE_V2_NOT_READY",
+                "confidence": 0.0,
+                "ok": False,
+                "error": "The installed gesture model uses the old pose format. Recapture and retrain hand-only gestures.",
+            }
         pred = gesture_model_v2.predict(vec)[0]
         prob = float(np.max(gesture_model_v2.predict_proba(vec)))
         return {"label": pred, "confidence": prob, "ok": True, "schema": "gesture_v2"}

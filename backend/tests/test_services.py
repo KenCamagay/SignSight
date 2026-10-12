@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
+import numpy as np
 from fastapi import HTTPException
 
 
@@ -109,6 +110,26 @@ class ClassifierValidationTests(unittest.TestCase):
 
         self.assertFalse(result["ok"])
         self.assertIn("signer_id is required", result["error"])
+
+    def test_gesture_training_requires_two_labels(self):
+        from app.services import gesture_classifier
+
+        with (
+            patch.object(
+                gesture_classifier,
+                "load_gesture_v2_dataset",
+                return_value=(np.zeros((2, 1)), np.array(["THANK_YOU", "THANK_YOU"])),
+            ),
+            patch.object(
+                gesture_classifier,
+                "load_legacy_gesture_dataset",
+                return_value=(np.array([]), np.array([])),
+            ),
+        ):
+            result = gesture_classifier.train_gesture_model()
+
+        self.assertFalse(result["ok"])
+        self.assertIn("At least two gesture labels", result["error"])
 
 
 if __name__ == "__main__":

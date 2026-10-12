@@ -71,7 +71,7 @@ export default function DashboardScreen({
             </ImageBackground>
 
             <View style={styles.heroBody}>
-              <Text style={styles.heroBodyTitle}>Translate ASL Letters</Text>
+              <Text style={styles.heroBodyTitle}>Translate FSL Letters</Text>
               <Text style={styles.heroBodySub}>
                 Start real-time translation using your device&apos;s camera to
                 identify landmarks and signs.

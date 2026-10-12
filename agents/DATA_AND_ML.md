@@ -109,17 +109,14 @@ Legacy gesture vector:
 GESTURE_FRAMES * 63
 ```
 
-Gesture V2 vector:
+Hand-only Gesture V2 vector:
 
 ```text
-GESTURE_FRAMES * (63 + upper_body_key_count * 4)
+GESTURE_FRAMES * 2 * 63
 ```
 
-Current upper body keys:
-
-```text
-nose leftEar rightEar leftShoulder rightShoulder leftElbow rightElbow leftWrist rightWrist leftHip rightHip
-```
+Each frame contains a left-hand slot and a right-hand slot. Missing hands are
+zero-padded. Existing pose-based Gesture V2 models must be retrained.
 
 ## Training Modes
 

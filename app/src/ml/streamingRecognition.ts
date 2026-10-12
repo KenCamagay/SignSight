@@ -64,6 +64,7 @@ export function createStreamingRecognitionBuffers(): StreamingRecognitionBuffers
     gestureV2LiveFrames: [],
     lastLetterMotionAtMs: 0,
     lastWordPredictionAtMs: 0,
+    lastWordLandmarkAtMs: 0,
     lastWordHandAtMs: 0,
     wordNoHandSinceMs: 0,
     wordMissCount: 0,
@@ -239,16 +240,11 @@ export async function saveStreamingGestureSample(
   }
 ) {
   const validFramesV2 = payload.framesV2.filter(
-    (frame) => Array.isArray(frame.handLandmarks) || hasUsableUpperBody(frame)
+    (frame) => frame.hands.length > 0
   );
 
   if (validFramesV2.length < MIN_PREDICT_FRAMES) {
     return { ok: false, error: "Not enough gesture frames recorded yet." };
-  }
-
-  const reviewedUpperBodyFrames = validFramesV2.filter(hasUsableUpperBody);
-  if (reviewedUpperBodyFrames.length < MIN_PREDICT_FRAMES) {
-    return { ok: false, error: "Upper-body tracking is not stable enough to save this word yet." };
   }
 
   const res = await fetch(`${apiBase}/upload_gesture`, {
@@ -280,26 +276,27 @@ export async function saveStreamingGestureSample(
     ok: true,
     reviewStatus: String(json.review_status ?? "approved"),
     frameCount: validFramesV2.length,
-    upperBodyFrameCount: reviewedUpperBodyFrames.length,
+    handFrameCount: validFramesV2.length,
   };
 }
 
 function toGestureV2Frame(hand: HandTrackingFrameResult): GestureV2SampleFrame {
+  const hands = (hand.hands ?? [])
+    .filter((candidate) => Array.isArray(candidate.landmarks) && candidate.landmarks.length === 21)
+    .map((candidate) => ({
+      landmarks: candidate.landmarks,
+      handedness: candidate.handedness,
+    }));
+
   return {
-    handLandmarks: hand.landmarks ?? null,
+    hands,
     handedness: hand.handedness ?? null,
-    upperBody: hand.hasUpperBody
-      ? (hand.upperBody as GestureV2SampleFrame["upperBody"]) ?? null
-      : null,
-    poseLandmarksFull: Array.isArray(hand.upperBody)
-      ? (hand.upperBody as GestureV2SampleFrame["poseLandmarksFull"])
-      : null,
     timestampMs: hand.timestampMs,
   };
 }
 
-export function hasUsableUpperBody(frame: GestureV2SampleFrame) {
-  return !!frame.upperBody && Object.keys(frame.upperBody).length > 0;
+export function hasUsableHands(frame: GestureV2SampleFrame) {
+  return frame.hands.length > 0;
 }
 
 function handleNoHand(context: RecognitionContext) {
@@ -502,37 +499,40 @@ async function processWordFrame(
     return;
   }
 
-  try {
-    context.onPredictionAttempt?.("landmarks");
-    const landmarkRes = await fetch(`${context.apiBase}/predict_landmarks`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        landmarks: hand.landmarks,
-        handedness: hand.handedness ?? null,
-        labelSpace: "words",
-      }),
-    });
+  if (now - buffers.lastWordLandmarkAtMs >= WORD_PREDICT_INTERVAL_MS) {
+    buffers.lastWordLandmarkAtMs = now;
+    try {
+      context.onPredictionAttempt?.("landmarks");
+      const landmarkRes = await fetch(`${context.apiBase}/predict_landmarks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          landmarks: hand.landmarks,
+          handedness: hand.handedness ?? null,
+          labelSpace: "words",
+        }),
+      });
 
-    const landmarkJson = await landmarkRes.json();
-    const landmarkLabel = String(landmarkJson.label ?? "?");
-    const landmarkConf = Number(landmarkJson.confidence ?? 0);
-    const landmarkAccepted =
-      typeof landmarkJson.accepted_prediction === "boolean"
-        ? landmarkJson.accepted_prediction
-        : landmarkConf >= STATIC_WORD_CONFIDENCE_THRESHOLD;
+      const landmarkJson = await landmarkRes.json();
+      const landmarkLabel = String(landmarkJson.label ?? "?");
+      const landmarkConf = Number(landmarkJson.confidence ?? 0);
+      const landmarkAccepted =
+        typeof landmarkJson.accepted_prediction === "boolean"
+          ? landmarkJson.accepted_prediction
+          : landmarkConf >= STATIC_WORD_CONFIDENCE_THRESHOLD;
 
-    if (landmarkAccepted && landmarkLabel === "I_LOVE_YOU") {
-      buffers.wordMissCount = 0;
-      if (context.isMountedRef.current) {
-        context.setRawLabel(landmarkLabel);
-        context.setLastLabel(landmarkLabel);
-        context.setLastConf(landmarkConf);
+      if (landmarkAccepted && landmarkLabel === "I_LOVE_YOU") {
+        buffers.wordMissCount = 0;
+        if (context.isMountedRef.current) {
+          context.setRawLabel(landmarkLabel);
+          context.setLastLabel(landmarkLabel);
+          context.setLastConf(landmarkConf);
+        }
+        appendSentenceToken(landmarkLabel, context);
+        return;
       }
-      appendSentenceToken(landmarkLabel, context);
-      return;
-    }
-  } catch {}
+    } catch {}
+  }
 
   buffers.liveWordFrames.push({ landmarks: hand.landmarks! });
   buffers.gestureV2LiveFrames.push(toGestureV2Frame(hand));
@@ -563,7 +563,7 @@ async function processWordFrame(
 
   context.onPredictionAttempt?.("gesture");
   const v2Frames = buffers.gestureV2LiveFrames;
-  const v2FrameCount = v2Frames.filter(hasUsableUpperBody).length;
+  const v2FrameCount = v2Frames.filter(hasUsableHands).length;
   let json: any = null;
   let usedV2 = false;
 

@@ -53,7 +53,7 @@ Core files:
 The runtime:
 
 1. Receives native frame processor results.
-2. Normalizes upper-body output shape.
+2. Normalizes the native hand output shape.
 3. Maintains latest hand frame and debug state.
 4. Applies hand-loss grace period.
 5. Buffers frames for letters or words.
@@ -136,12 +136,12 @@ Word mode:
 
 1. Attempts static word detection with `labelSpace: "words"`.
 2. Buffers live word frames.
-3. Preferentially sends Gesture V2 frames when upper-body data is available.
+3. Preferentially sends hand-only Gesture V2 frames when detected hand data is available.
 4. Falls back to legacy gesture prediction.
 
 Agent risk:
 
-- Do not remove upper-body normalization without checking Gesture V2.
+- Gesture V2 currently uses up to two hands and no upper-body pose data.
 - Do not change `MIN_PREDICT_FRAMES` or frame counts without backend implications.
 
 ## Developer Lab

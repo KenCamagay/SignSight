@@ -10,7 +10,7 @@ import { API_BASE } from "../../../config/api";
 import { BG } from "../../../components/lab/shared/labColors";
 import { ASL_LABELS } from "../../../ml/labels";
 import {
-  hasUsableUpperBody,
+  hasUsableHands,
   MIN_PREDICT_FRAMES,
   saveStreamingGestureSample,
   saveStreamingLandmarkSample,
@@ -562,15 +562,15 @@ function CaptureTabScreen({
     }
 
     const framesV2 = recognitionRuntime.getGestureRecordingFramesV2();
-    const usableUpperBodyFrameCount = framesV2.filter(hasUsableUpperBody).length;
+    const usableHandFrameCount = framesV2.filter(hasUsableHands).length;
     if (framesV2.length < MIN_PREDICT_FRAMES) {
       setSaveFeedback("error", "Record a few more gesture frames before saving.");
       setRecordingElapsedMs(0);
       recognitionRuntime.resetGestureRecording();
       return;
     }
-    if (usableUpperBodyFrameCount < MIN_PREDICT_FRAMES) {
-      setSaveFeedback("error", "Upper-body tracking is not stable enough to save this word yet.");
+    if (usableHandFrameCount < MIN_PREDICT_FRAMES) {
+      setSaveFeedback("error", "Hand tracking is not stable enough to save this gesture yet.");
       setRecordingElapsedMs(0);
       recognitionRuntime.resetGestureRecording();
       return;
@@ -621,7 +621,7 @@ function CaptureTabScreen({
       onFlipCamera={cameraRuntime.flipCamera}
       onToggleTorch={cameraRuntime.toggleTorch}
       orientedFrame={cameraRuntime.orientedFrame}
-      overlayMode={mode === "letters" ? "LETTERS" : "WORDS"}
+      overlayMode="LETTERS"
       showFullBodyOverlay={showFullBodyOverlay}
       overlayVisible={true}
       ready={cameraRuntime.ready}

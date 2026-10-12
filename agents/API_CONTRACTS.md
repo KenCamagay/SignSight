@@ -35,30 +35,20 @@ http://<host-lan-ip>:8000
 
 Static landmark endpoints expect exactly 21 points at service validation time.
 
-## Upper Body Point
+## Gesture Hand Frame
+
+Gesture V2 now uses up to two hand landmark sets per frame and does not include pose landmarks:
 
 ```json
 {
-  "x": 0.4,
-  "y": 0.3,
-  "z": 0.0,
-  "visibility": 0.9
+  "hands": [
+    {"landmarks": [], "handedness": "Left"},
+    {"landmarks": [], "handedness": "Right"}
+  ],
+  "handedness": "Right",
+  "timestampMs": 12345
 }
 ```
-
-Supported upper-body keys:
-
-- `nose`
-- `leftEar`
-- `rightEar`
-- `leftShoulder`
-- `rightShoulder`
-- `leftElbow`
-- `rightElbow`
-- `leftWrist`
-- `rightWrist`
-- `leftHip`
-- `rightHip`
 
 ## Landmark Prediction
 
@@ -167,21 +157,15 @@ Request:
 {
   "frames": [[]],
   "handedness": "Right",
-  "framesV2": [
-    {
-      "handLandmarks": [],
-      "handedness": "Right",
-      "upperBody": {},
-      "timestampMs": 12345
-    }
-  ]
+  "framesV2": [{"hands": [], "handedness": "Right", "timestampMs": 12345}]
 }
 ```
 
 Backend behavior:
 
-- If `framesV2` exists, backend tries Gesture V2 model.
-- If no Gesture V2 model exists, response can be `GESTURE_V2_NOT_READY`.
+- If `framesV2` exists, backend tries the hand-only Gesture V2 model.
+- Old pose-based Gesture V2 captures are ignored by the new trainer.
+- If no compatible hand-only model exists, response can be `GESTURE_V2_NOT_READY`.
 - Mobile falls back to legacy gesture prediction when V2 is not ready.
 
 Response:

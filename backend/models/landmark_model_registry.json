@@ -1,5 +1,5 @@
 {
-  "active_version_id": "landmarks_bootstrap_20260405T035749Z",
+  "active_version_id": "landmarks_bootstrap_20261012T050435Z",
   "versions": [
     {
       "version_id": "legacy_20260401T101811Z",
@@ -236,6 +236,551 @@
       ],
       "trained_at": "2026-04-05T03:57:49+00:00",
       "accuracy": 1.0,
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20260921T063358Z",
+      "label": "GS1",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "K",
+        "L",
+        "M",
+        "O",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-09-21T06:33:58+00:00",
+      "accuracy": 1.0,
+      "note": "Gs",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20260929T072539Z",
+      "label": "FSL 1.1",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "K",
+        "L",
+        "M",
+        "O",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-09-29T07:25:39+00:00",
+      "accuracy": 0.9711779448621554,
+      "note": "FSL sign language",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261001T035420Z",
+      "label": "K",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "K",
+        "L",
+        "M",
+        "O",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-01T03:54:20+00:00",
+      "accuracy": 0.98676293622142,
+      "note": ".",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261002T063844Z",
+      "label": "G",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "G",
+        "H",
+        "K",
+        "L",
+        "M",
+        "O",
+        "P",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-02T06:38:44+00:00",
+      "accuracy": 0.9887640449438202,
+      "note": "train",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261002T064020Z",
+      "label": "H",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "G",
+        "H",
+        "K",
+        "L",
+        "M",
+        "O",
+        "P",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-02T06:40:20+00:00",
+      "accuracy": 0.9887640449438202,
+      "note": "train",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261002T064237Z",
+      "label": "K",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "G",
+        "H",
+        "K",
+        "L",
+        "M",
+        "O",
+        "P",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-02T06:42:37+00:00",
+      "accuracy": 0.9875086745315753,
+      "note": "Train",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261002T064352Z",
+      "label": "L",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "G",
+        "H",
+        "K",
+        "L",
+        "M",
+        "O",
+        "P",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-02T06:43:52+00:00",
+      "accuracy": 0.9897610921501706,
+      "note": "Train",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261002T064521Z",
+      "label": "P",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "G",
+        "H",
+        "K",
+        "L",
+        "M",
+        "O",
+        "P",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-02T06:45:21+00:00",
+      "accuracy": 0.9905850706119704,
+      "note": "Train",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261002T064640Z",
+      "label": "Q",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "G",
+        "H",
+        "K",
+        "L",
+        "M",
+        "O",
+        "P",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-02T06:46:40+00:00",
+      "accuracy": 0.9920529801324504,
+      "note": "Train",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261002T064950Z",
+      "label": "Q",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "G",
+        "H",
+        "K",
+        "L",
+        "M",
+        "O",
+        "P",
+        "Q",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-02T06:49:50+00:00",
+      "accuracy": 0.9926605504587156,
+      "note": "Train",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261002T065125Z",
+      "label": "S",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "G",
+        "H",
+        "K",
+        "L",
+        "M",
+        "O",
+        "P",
+        "Q",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-02T06:51:25+00:00",
+      "accuracy": 0.9926605504587156,
+      "note": "Train",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261002T065340Z",
+      "label": "S",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "G",
+        "H",
+        "K",
+        "L",
+        "M",
+        "O",
+        "P",
+        "Q",
+        "S",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-02T06:53:40+00:00",
+      "accuracy": 0.9941383352872216,
+      "note": "train",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261002T065430Z",
+      "label": "T",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "G",
+        "H",
+        "K",
+        "L",
+        "M",
+        "O",
+        "P",
+        "Q",
+        "S",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-02T06:54:30+00:00",
+      "accuracy": 0.9941383352872216,
+      "note": "Train",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261002T070246Z",
+      "label": "T",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "G",
+        "H",
+        "K",
+        "L",
+        "M",
+        "O",
+        "P",
+        "Q",
+        "S",
+        "T",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-02T07:02:46+00:00",
+      "accuracy": 0.9910813823857302,
+      "note": "..",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261002T070926Z",
+      "label": "UVW",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "G",
+        "H",
+        "K",
+        "L",
+        "M",
+        "O",
+        "P",
+        "Q",
+        "S",
+        "T",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-02T07:09:26+00:00",
+      "accuracy": 0.985499462943072,
+      "note": "..",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261002T071149Z",
+      "label": "L",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "G",
+        "H",
+        "K",
+        "L",
+        "M",
+        "O",
+        "P",
+        "Q",
+        "S",
+        "T",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-02T07:11:49+00:00",
+      "accuracy": 0.9885714285714285,
+      "note": "...s",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261003T023949Z",
+      "label": "Lat",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "A",
+        "B",
+        "G",
+        "H",
+        "K",
+        "M",
+        "O",
+        "P",
+        "Q",
+        "S",
+        "T",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-03T02:39:49+00:00",
+      "accuracy": 0.998766954377312,
+      "note": "..",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261003T024133Z",
+      "label": "Lat1",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "A",
+        "B",
+        "D",
+        "E",
+        "G",
+        "H",
+        "K",
+        "M",
+        "O",
+        "P",
+        "Q",
+        "S",
+        "T",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-03T02:41:33+00:00",
+      "accuracy": 0.9981971153846154,
+      "note": "mm",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261003T024435Z",
+      "label": "Lat2",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "A",
+        "B",
+        "D",
+        "E",
+        "G",
+        "H",
+        "K",
+        "M",
+        "O",
+        "P",
+        "Q",
+        "S",
+        "T",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-03T02:44:35+00:00",
+      "accuracy": 0.9994093325457767,
+      "note": "..",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261003T024604Z",
+      "label": "Lat3",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "A",
+        "B",
+        "D",
+        "E",
+        "G",
+        "H",
+        "K",
+        "M",
+        "O",
+        "P",
+        "Q",
+        "S",
+        "T",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-03T02:46:04+00:00",
+      "accuracy": 0.9994093325457767,
+      "note": "..",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261003T024834Z",
+      "label": "Lat4",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "A",
+        "B",
+        "D",
+        "E",
+        "G",
+        "H",
+        "K",
+        "M",
+        "O",
+        "P",
+        "Q",
+        "S",
+        "T",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-03T02:48:34+00:00",
+      "accuracy": 0.9994093325457767,
+      "note": "...",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261012T050435Z",
+      "label": "SignSight T1",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "A",
+        "B",
+        "D",
+        "E",
+        "G",
+        "H",
+        "K",
+        "M",
+        "O",
+        "P",
+        "Q",
+        "S",
+        "T",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-12T05:04:35+00:00",
+      "accuracy": 0.9994093325457767,
+      "note": "Model",
       "source": "trained"
     }
   ],

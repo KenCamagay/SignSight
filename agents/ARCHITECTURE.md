@@ -64,7 +64,7 @@ This is why `J` and `Z` are excluded from static letter labels.
 Word mode frame
   -> try static word landmark prediction with labelSpace=words
   -> if no accepted static word, buffer gesture frames
-  -> prefer Gesture V2 if enough upper-body frames exist
+  -> prefer hand-only Gesture V2 if enough two-hand frames exist
   -> fall back to legacy gesture model
   -> show word prediction
 ```

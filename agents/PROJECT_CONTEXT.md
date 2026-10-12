@@ -76,12 +76,12 @@ The web frontend contains:
 | Term | Meaning |
 | --- | --- |
 | Landmark | A MediaPipe hand point with `x`, `y`, and `z`. Static signs use 21 hand landmarks. |
-| Upper body | A selected subset of MediaPipe pose landmarks such as shoulders, elbows, wrists, hips, ears, and nose. |
+| Upper body | Native pose landmarks are available for future work but are not currently used for gesture classification. |
 | Static letter | A letter recognized from a single hand shape. |
 | Motion-only letter | A letter requiring motion, currently `J` and `Z`. |
 | Static word | A word-like sign recognized from one stable hand shape, currently `I_LOVE_YOU`. |
 | Gesture | A dynamic sign recognized from a sequence of frames. |
-| Gesture V2 | Gesture representation using hand landmarks plus upper-body pose features. |
+| Gesture V2 | Gesture representation using up to two hand landmark sets and no upper-body pose features. |
 | Reviewed dataset | Samples with signer/session/camera metadata and an explicit review status. |
 | Bootstrap training | Lower-quota training mode for early iteration. |
 | Full reviewed training | Higher-quota training mode intended for broader model confidence. |

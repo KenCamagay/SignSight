@@ -38,22 +38,18 @@ class GestureMlTests(unittest.TestCase):
         self.assertEqual(vec.dtype, np.float32)
         self.assertTrue(np.isfinite(vec).all())
 
-    def test_gesture_v2_to_vec_includes_upper_body_features(self):
+    def test_gesture_v2_to_vec_uses_two_hand_features(self):
         from app.core.constants import GESTURE_FRAMES
-        from app.ml.gestures import GESTURE_V2_UPPER_BODY_KEYS, gesture_v2_to_vec
+        from app.ml.gestures import GESTURE_HAND_SLOTS, gesture_v2_to_vec
 
         frame = {
-            "handLandmarks": sample_landmarks(),
-            "handedness": "Right",
-            "upperBody": {
-                "leftShoulder": {"x": 0.4, "y": 0.3, "z": 0.0, "visibility": 0.9},
-                "rightShoulder": {"x": 0.6, "y": 0.3, "z": 0.0, "visibility": 0.9},
-                "leftHip": {"x": 0.42, "y": 0.7, "z": 0.0, "visibility": 0.8},
-                "rightHip": {"x": 0.58, "y": 0.7, "z": 0.0, "visibility": 0.8},
-            },
+            "hands": [
+                {"landmarks": sample_landmarks(), "handedness": "Left"},
+                {"landmarks": sample_landmarks(), "handedness": "Right"},
+            ],
             "timestampMs": 1000,
         }
-        expected_frame_width = 63 + (len(GESTURE_V2_UPPER_BODY_KEYS) * 4)
+        expected_frame_width = GESTURE_HAND_SLOTS * 63
 
         vec = gesture_v2_to_vec([frame] * 4)
 

@@ -1,0 +1,148 @@
+{
+  "version_id": "landmarks_bootstrap_20261002T064237Z",
+  "label": "K",
+  "note": "Train",
+  "training_mode": "bootstrap",
+  "accuracy": 0.9875086745315753,
+  "active_static_letters": [
+    "G",
+    "H",
+    "K",
+    "L",
+    "M",
+    "O",
+    "P",
+    "U",
+    "X"
+  ],
+  "active_static_word_labels": [
+    "I_LOVE_YOU"
+  ],
+  "ready_static_letters": [
+    "G",
+    "H",
+    "K",
+    "L",
+    "M",
+    "O",
+    "P",
+    "U",
+    "X"
+  ],
+  "ready_static_word_labels": [
+    "I_LOVE_YOU"
+  ],
+  "unready_static_letters": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "I",
+    "N",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "V",
+    "W",
+    "Y"
+  ],
+  "deficits_by_label": {
+    "A": [
+      "A: approved 0/40",
+      "A: Left hand 0/20",
+      "A: Right hand 0/20",
+      "A: signers 0/1"
+    ],
+    "B": [
+      "B: approved 0/40",
+      "B: Left hand 0/20",
+      "B: Right hand 0/20",
+      "B: signers 0/1"
+    ],
+    "C": [
+      "C: approved 0/40",
+      "C: Left hand 0/20",
+      "C: Right hand 0/20",
+      "C: signers 0/1"
+    ],
+    "D": [
+      "D: approved 0/40",
+      "D: Left hand 0/20",
+      "D: Right hand 0/20",
+      "D: signers 0/1"
+    ],
+    "E": [
+      "E: approved 0/40",
+      "E: Left hand 0/20",
+      "E: Right hand 0/20",
+      "E: signers 0/1"
+    ],
+    "F": [
+      "F: approved 0/40",
+      "F: Left hand 0/20",
+      "F: Right hand 0/20",
+      "F: signers 0/1"
+    ],
+    "I": [
+      "I: approved 0/40",
+      "I: Left hand 0/20",
+      "I: Right hand 0/20",
+      "I: signers 0/1"
+    ],
+    "N": [
+      "N: Right hand 4/20"
+    ],
+    "Q": [
+      "Q: Left hand 0/20"
+    ],
+    "R": [
+      "R: approved 0/40",
+      "R: Left hand 0/20",
+      "R: Right hand 0/20",
+      "R: signers 0/1"
+    ],
+    "S": [
+      "S: Left hand 0/20"
+    ],
+    "T": [
+      "T: Left hand 0/20"
+    ],
+    "V": [
+      "V: approved 0/40",
+      "V: Left hand 0/20",
+      "V: Right hand 0/20",
+      "V: signers 0/1"
+    ],
+    "W": [
+      "W: approved 0/40",
+      "W: Left hand 0/20",
+      "W: Right hand 0/20",
+      "W: signers 0/1"
+    ],
+    "Y": [
+      "Y: Right hand 8/20"
+    ]
+  },
+  "trained_at": "2026-10-02T06:42:37+00:00",
+  "training_sample_counts": {
+    "G": 1255,
+    "H": 517,
+    "K": 1598,
+    "L": 1492,
+    "M": 431,
+    "O": 140,
+    "P": 305,
+    "U": 391,
+    "X": 776,
+    "I_LOVE_YOU": 296
+  },
+  "quotas_used": {
+    "min_approved_samples_per_label": 40,
+    "min_approved_per_hand": 20,
+    "min_signers_per_label": 1,
+    "min_ready_static_letters": 3
+  }
+}

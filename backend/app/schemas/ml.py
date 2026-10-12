@@ -30,8 +30,14 @@ class UpperBodyLandmarksReq(BaseModel):
     rightHip: Optional[UpperBodyPointReq] = None
 
 
+class GestureHandReq(BaseModel):
+    landmarks: list[LandmarkPointReq]
+    handedness: Optional[str] = None
+
+
 class GestureV2FrameReq(BaseModel):
     handLandmarks: Optional[list[LandmarkPointReq]] = None
+    hands: Optional[list[GestureHandReq]] = None
     handedness: Optional[str] = None
     upperBody: Optional[UpperBodyLandmarksReq] = None
     timestampMs: float

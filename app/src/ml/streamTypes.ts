@@ -25,10 +25,11 @@ export type LandmarkSampleFrame = {
 };
 
 export type GestureV2SampleFrame = {
-  handLandmarks: HandPoint[] | null;
+  hands: Array<{
+    landmarks: HandPoint[];
+    handedness: Handedness | null;
+  }>;
   handedness: Handedness | null;
-  upperBody: UpperBodyLandmarks | null;
-  poseLandmarksFull: UpperBodyEntry[] | null;
   timestampMs: number;
 };
 
@@ -40,6 +41,7 @@ export type StreamingRecognitionBuffers = {
   gestureV2LiveFrames: GestureV2SampleFrame[];
   lastLetterMotionAtMs: number;
   lastWordPredictionAtMs: number;
+  lastWordLandmarkAtMs: number;
   lastWordHandAtMs: number;
   wordNoHandSinceMs: number;
   wordMissCount: number;
