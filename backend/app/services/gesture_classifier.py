@@ -59,6 +59,15 @@ def _gesture_record_kind(obj: dict) -> str:
     return "legacy"
 
 
+def _is_hand_only_gesture_record(obj: dict) -> bool:
+    frames_v2 = obj.get("framesV2")
+    return (
+        isinstance(frames_v2, list)
+        and len(frames_v2) > 0
+        and all(isinstance(frame, dict) and isinstance(frame.get("hands"), list) for frame in frames_v2)
+    )
+
+
 def load_legacy_gesture_dataset():
     X, y = [], []
     for label in GESTURE_LABELS:
@@ -95,9 +104,7 @@ def load_gesture_v2_dataset():
                 if not _is_approved_gesture_record(obj):
                     continue
                 frames_v2 = obj.get("framesV2")
-                if not isinstance(frames_v2, list) or len(frames_v2) == 0:
-                    continue
-                if not all(isinstance(frame, dict) and isinstance(frame.get("hands"), list) for frame in frames_v2):
+                if not _is_hand_only_gesture_record(obj):
                     continue
                 X.append(gesture_v2_to_vec(frames_v2))
                 y.append(obj["label"])
@@ -314,7 +321,7 @@ def gesture_label_summary(
         kind = _gesture_record_kind(record)
         summary[kind] += 1
 
-        if isinstance(record.get("framesV2"), list) and len(record["framesV2"]) > 0:
+        if _is_hand_only_gesture_record(record):
             summary["v2_sequences"] += 1
 
         handedness = record.get("handedness")
@@ -362,7 +369,7 @@ def health_summary() -> dict:
             if isinstance(signer_id, str) and signer_id.strip():
                 stats["signer_ids"].add(signer_id.strip())
                 gesture_signer_ids.add(signer_id.strip())
-            if isinstance(record.get("framesV2"), list) and len(record["framesV2"]) > 0:
+            if _is_hand_only_gesture_record(record):
                 stats["v2_sequences"] += 1
                 gesture_v2_total += 1
         gesture_counts_by_label[label] = {
