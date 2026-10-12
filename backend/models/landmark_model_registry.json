@@ -1,5 +1,5 @@
 {
-  "active_version_id": "landmarks_bootstrap_20261012T060813Z",
+  "active_version_id": "landmarks_bootstrap_20261012T064452Z",
   "versions": [
     {
       "version_id": "legacy_20260401T101811Z",
@@ -973,6 +973,44 @@
       "trained_at": "2026-10-12T06:08:13+00:00",
       "accuracy": 0.9987096774193548,
       "note": "..",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261012T064452Z",
+      "label": "SS T5",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-12T06:44:52+00:00",
+      "accuracy": 0.9997542695662858,
+      "note": ".",
       "source": "trained"
     }
   ],
