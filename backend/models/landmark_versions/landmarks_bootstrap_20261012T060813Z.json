@@ -1,0 +1,104 @@
+{
+  "version_id": "landmarks_bootstrap_20261012T060813Z",
+  "label": "SSt5",
+  "note": "..",
+  "training_mode": "bootstrap",
+  "accuracy": 0.9987096774193548,
+  "active_static_letters": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y"
+  ],
+  "active_static_word_labels": [
+    "I_LOVE_YOU"
+  ],
+  "ready_static_letters": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y"
+  ],
+  "ready_static_word_labels": [
+    "I_LOVE_YOU"
+  ],
+  "unready_static_letters": [
+    "R"
+  ],
+  "deficits_by_label": {
+    "R": [
+      "R: approved 0/40",
+      "R: signers 0/1"
+    ]
+  },
+  "trained_at": "2026-10-12T06:08:13+00:00",
+  "training_sample_counts": {
+    "A": 189,
+    "B": 212,
+    "C": 355,
+    "D": 63,
+    "E": 147,
+    "F": 487,
+    "G": 1255,
+    "H": 517,
+    "I": 455,
+    "K": 1721,
+    "L": 400,
+    "M": 993,
+    "N": 1089,
+    "O": 286,
+    "P": 423,
+    "Q": 624,
+    "S": 350,
+    "T": 447,
+    "U": 727,
+    "V": 1342,
+    "W": 1053,
+    "X": 776,
+    "Y": 1289,
+    "I_LOVE_YOU": 296
+  },
+  "quotas_used": {
+    "min_approved_samples_per_label": 40,
+    "min_signers_per_label": 1,
+    "min_ready_static_letters": 3
+  }
+}

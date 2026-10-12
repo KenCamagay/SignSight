@@ -1,5 +1,5 @@
 {
-  "active_version_id": "landmarks_bootstrap_20261012T050435Z",
+  "active_version_id": "landmarks_bootstrap_20261012T060813Z",
   "versions": [
     {
       "version_id": "legacy_20260401T101811Z",
@@ -781,6 +781,198 @@
       "trained_at": "2026-10-12T05:04:35+00:00",
       "accuracy": 0.9994093325457767,
       "note": "Model",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261012T051102Z",
+      "label": "SS T2",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "A",
+        "B",
+        "D",
+        "E",
+        "G",
+        "H",
+        "K",
+        "M",
+        "O",
+        "P",
+        "Q",
+        "S",
+        "T",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-12T05:11:02+00:00",
+      "accuracy": 0.9994093325457767,
+      "note": "..",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261012T051452Z",
+      "label": "SS T3",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "A",
+        "B",
+        "D",
+        "E",
+        "G",
+        "H",
+        "K",
+        "M",
+        "O",
+        "P",
+        "Q",
+        "S",
+        "T",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-12T05:14:52+00:00",
+      "accuracy": 0.9994093325457767,
+      "note": "...",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261012T051837Z",
+      "label": "Bootstrap FSL dataset 2026-10-12",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "A",
+        "B",
+        "D",
+        "E",
+        "G",
+        "H",
+        "K",
+        "M",
+        "O",
+        "P",
+        "Q",
+        "S",
+        "T",
+        "U",
+        "X"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-12T05:18:37+00:00",
+      "accuracy": 0.9994093325457767,
+      "note": "Verify new landmark dataset training path",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261012T054018Z",
+      "label": "SSt3",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "A",
+        "B",
+        "D",
+        "E",
+        "G",
+        "H",
+        "K",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-12T05:40:18+00:00",
+      "accuracy": 0.9988670694864048,
+      "note": "jsjshs",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261012T054706Z",
+      "label": "SST4",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "K",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-12T05:47:06+00:00",
+      "accuracy": 0.9992897727272727,
+      "note": "...",
+      "source": "trained"
+    },
+    {
+      "version_id": "landmarks_bootstrap_20261012T060813Z",
+      "label": "SSt5",
+      "training_mode": "bootstrap",
+      "active_static_letters": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y"
+      ],
+      "active_static_word_labels": [
+        "I_LOVE_YOU"
+      ],
+      "trained_at": "2026-10-12T06:08:13+00:00",
+      "accuracy": 0.9987096774193548,
+      "note": "..",
       "source": "trained"
     }
   ],

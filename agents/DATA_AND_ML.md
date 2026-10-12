@@ -122,12 +122,12 @@ zero-padded. Existing pose-based Gesture V2 models must be retrained.
 
 Landmark training modes:
 
-| Mode | Min approved samples per label | Min per hand | Min signers | Use |
-| --- | ---: | ---: | ---: | --- |
-| `bootstrap` | 40 | 20 | 1 | Early partial model iteration. |
-| `full_reviewed` | 480 | 240 | 8 | More reliable reviewed model. |
+| Mode | Min approved samples per label | Min signers | Use |
+| --- | ---: | ---: | --- |
+| `bootstrap` | 40 | 1 | Early partial model iteration. |
+| `full_reviewed` | 480 | 8 | More reliable reviewed model. |
 
-Agents should not lower these quotas just to make a training request pass unless the task is explicitly about training policy.
+Handedness counts remain visible in dataset health, but they are not exclusion requirements.
 
 ## Model Registry
 

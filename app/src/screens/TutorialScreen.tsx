@@ -9,7 +9,6 @@ import {
   SafeAreaView,
   useWindowDimensions,
   Modal,
-  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { TYPOGRAPHY } from "../config/typography";
@@ -93,21 +92,17 @@ export default function TutorialScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-
-      {/* Page Title */}
       <View style={styles.headBlock}>
-        <Text style={styles.pageTitle}>ASL Alphabet</Text>
-        {/* <Text style={styles.pageSub}>Learn and practice American Sign Language</Text> */}
+        <Text style={styles.pageTitle}>Sign Alphabet</Text>
       </View>
 
-      {/* Sticky preview area */}
       <View style={styles.stickyPreviewWrap}>
         <View style={styles.previewCard}>
           <View style={styles.previewImageWrap}>
             <Image
               source={ASL_IMAGES[selected]}
               style={styles.previewImg}
-              resizeMode="cover"
+              resizeMode="contain"
             />
           </View>
 
@@ -120,7 +115,7 @@ export default function TutorialScreen() {
             </View>
 
             <Text style={styles.previewDesc}>
-              {LETTER_DESCRIPTIONS[selected] ?? "Learn how to properly form this ASL letter."}
+              {LETTER_DESCRIPTIONS[selected] ?? "Learn how to form this sign."}
             </Text>
 
             <View style={styles.previewActions}>
@@ -194,8 +189,8 @@ const styles = StyleSheet.create({
   },
   headBlock: {
     paddingHorizontal: SPACING.SPACE_MD,
-    paddingTop: SPACING.SPACE_2XL,
-    marginBottom: SPACING.SPACE_LG,
+    paddingTop: SPACING.SPACE_LG,
+    marginBottom: SPACING.SPACE_SM,
   },
   pageTitle: {
     fontSize: TYPOGRAPHY.TEXT_3XL,
@@ -211,46 +206,32 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   stickyPreviewWrap: {
-    paddingTop: SPACING.SPACE_XS,
+    paddingTop: 0,
     paddingHorizontal: SPACING.SPACE_MD,
     paddingBottom: SPACING.SPACE_MD,
     backgroundColor: BG,
-    zIndex: 10,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+    zIndex: 1,
   },
 
   previewCard: {
     backgroundColor: CARD,
-    borderRadius: 28,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: BORDER,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   previewImageWrap: {
-    height: 180,
-    backgroundColor: "#DDD",
+    height: 148,
+    backgroundColor: "#F1F3F4",
   },
   previewImg: {
     width: "100%",
     height: "100%",
   },
   previewBody: {
-    padding: SPACING.SPACE_LG,
+    padding: SPACING.SPACE_MD,
   },
   previewTopRow: {
     flexDirection: "row",
@@ -275,13 +256,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   previewDesc: {
-    marginTop: SPACING.SPACE_MD,
+    marginTop: SPACING.SPACE_SM,
     fontSize: TYPOGRAPHY.TEXT_SM,
-    lineHeight: 28,
+    lineHeight: 21,
     color: MUTED,
   },
   previewActions: {
-    marginTop: SPACING.SPACE_LG,
+    marginTop: SPACING.SPACE_MD,
     flexDirection: "row",
     gap: SPACING.SPACE_SM,
     alignItems: "center",
@@ -345,7 +326,7 @@ const styles = StyleSheet.create({
     minWidth: 92,
     maxWidth: "31%",
     aspectRatio: 1,
-    borderRadius: 28,
+    borderRadius: 16,
     borderWidth: 1.5,
     borderColor: BORDER,
     backgroundColor: "#FFFFFF",

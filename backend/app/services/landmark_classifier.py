@@ -42,13 +42,11 @@ DEFAULT_TRAINING_MODE: TrainingMode = "full_reviewed"
 LANDMARK_TRAINING_MODES: dict[TrainingMode, dict[str, int]] = {
     "bootstrap": {
         "min_approved_samples_per_label": 40,
-        "min_approved_per_hand": 20,
         "min_signers_per_label": 1,
         "min_ready_static_letters": 3,
     },
     "full_reviewed": {
         "min_approved_samples_per_label": 480,
-        "min_approved_per_hand": 240,
         "min_signers_per_label": 8,
         "min_ready_static_letters": 3,
     },
@@ -263,7 +261,6 @@ def _training_requirements(mode: object) -> dict[str, int]:
     requirements = LANDMARK_TRAINING_MODES[normalized_mode]
     return {
         "min_approved_samples_per_label": requirements["min_approved_samples_per_label"],
-        "min_approved_per_hand": requirements["min_approved_per_hand"],
         "min_signers_per_label": requirements["min_signers_per_label"],
         "min_ready_static_letters": requirements["min_ready_static_letters"],
     }
@@ -290,14 +287,6 @@ def _quota_status(summary: dict, mode: object = DEFAULT_TRAINING_MODE) -> tuple[
         if stats["approved"] < requirements["min_approved_samples_per_label"]:
             deficits.append(
                 f"{label}: approved {stats['approved']}/{requirements['min_approved_samples_per_label']}"
-            )
-        if stats["by_hand"]["Left"] < requirements["min_approved_per_hand"]:
-            deficits.append(
-                f"{label}: Left hand {stats['by_hand']['Left']}/{requirements['min_approved_per_hand']}"
-            )
-        if stats["by_hand"]["Right"] < requirements["min_approved_per_hand"]:
-            deficits.append(
-                f"{label}: Right hand {stats['by_hand']['Right']}/{requirements['min_approved_per_hand']}"
             )
         if signer_count < requirements["min_signers_per_label"]:
             deficits.append(
