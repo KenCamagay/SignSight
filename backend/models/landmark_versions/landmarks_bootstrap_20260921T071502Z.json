@@ -1,0 +1,111 @@
+{
+  "version_id": "landmarks_bootstrap_20260921T071502Z",
+  "label": "Ios",
+  "note": "Complete",
+  "training_mode": "bootstrap",
+  "accuracy": 1.0,
+  "active_static_letters": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "K",
+    "L",
+    "M",
+    "O",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y"
+  ],
+  "active_static_word_labels": [
+    "I_LOVE_YOU"
+  ],
+  "ready_static_letters": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "K",
+    "L",
+    "M",
+    "O",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y"
+  ],
+  "ready_static_word_labels": [
+    "I_LOVE_YOU"
+  ],
+  "unready_static_letters": [
+    "N",
+    "P"
+  ],
+  "deficits_by_label": {
+    "N": [
+      "N: approved 0/40",
+      "N: Left hand 0/20",
+      "N: Right hand 0/20",
+      "N: signers 0/1"
+    ],
+    "P": [
+      "P: approved 0/40",
+      "P: Left hand 0/20",
+      "P: Right hand 0/20",
+      "P: signers 0/1"
+    ]
+  },
+  "trained_at": "2026-09-21T07:15:02+00:00",
+  "training_sample_counts": {
+    "A": 1141,
+    "B": 1110,
+    "C": 994,
+    "D": 1715,
+    "E": 2776,
+    "F": 532,
+    "G": 987,
+    "H": 1180,
+    "I": 991,
+    "K": 1555,
+    "L": 1149,
+    "M": 602,
+    "O": 897,
+    "Q": 1179,
+    "R": 916,
+    "S": 926,
+    "T": 542,
+    "U": 853,
+    "V": 1150,
+    "W": 553,
+    "X": 1134,
+    "Y": 700,
+    "I_LOVE_YOU": 296
+  },
+  "quotas_used": {
+    "min_approved_samples_per_label": 40,
+    "min_approved_per_hand": 20,
+    "min_signers_per_label": 1,
+    "min_ready_static_letters": 3
+  }
+}
