@@ -268,8 +268,15 @@ export function useStreamingHandTracking({
 
       const result = detectHands(frame, {
         minProcessIntervalMs: intervalMs,
+
         maxResultAgeMs: 450,
+<<<<<<< Updated upstream
         runPoseLandmarker: false,
+=======
+        
+
+        runPoseLandmarker: detectMode === "WORDS",
+>>>>>>> Stashed changes
       });
 
       if (result) {

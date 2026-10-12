@@ -210,29 +210,43 @@ public final class SignSightHandTrackingController: NSObject,
     var candidates: [HandCandidate] = []
 
     for index in result.landmarks.indices {
-      let sourceLandmarks = result.landmarks[index]
+  let sourceLandmarks = result.landmarks[index]
 
-      let category =
-        index < result.handedness.count
-          ? result.handedness[index].first
-          : nil
+  guard sourceLandmarks.count == 21 else {
+    continue
+  }
 
-      let handedness = category?.categoryName ?? ""
-      let score = Double(category?.score ?? 0)
+  let landmarks: [[String: Double]] = sourceLandmarks.map { landmark in
+    [
+      "x": Double(landmark.x),
+      "y": Double(landmark.y),
+      "z": Double(landmark.z)
+    ]
+  }
 
-      let area = Self.estimateHandArea(
-        landmarks: sourceLandmarks
-      )
+  let category =
+    index < result.handedness.count
+      ? result.handedness[index].first
+      : nil
 
-      candidates.append(
-        HandCandidate(
-          landmarks: landmarks,
-          handedness: handedness,
-          score: score,
-          area: area
-        )
-      )
-    }
+  let handedness = category?.categoryName ?? ""
+  let score = Double(category?.score ?? 0)
+
+  let area = Self.estimateHandArea(
+    landmarks: sourceLandmarks
+  )
+
+  candidates.append(
+    HandCandidate(
+      landmarks: landmarks,
+      handedness: handedness,
+      score: score,
+      area: area
+    )
+    
+
+  )
+}
 
     let snapshot = HandSnapshot(
       hands: candidates,

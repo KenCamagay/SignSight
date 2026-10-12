@@ -1,5 +1,6 @@
 -- Merging decision tree log ---
 manifest
+<<<<<<< Updated upstream
 ADDED from /home/sky/SignSight/app/modules/signsight-hand-tracker/android/src/main/AndroidManifest.xml:1:1-2:12
 INJECTED from /home/sky/SignSight/app/modules/signsight-hand-tracker/android/src/main/AndroidManifest.xml:1:1-2:12
 	package
@@ -12,3 +13,17 @@ INJECTED from /home/sky/SignSight/app/modules/signsight-hand-tracker/android/src
 		INJECTED from /home/sky/SignSight/app/modules/signsight-hand-tracker/android/src/main/AndroidManifest.xml
 	android:minSdkVersion
 		INJECTED from /home/sky/SignSight/app/modules/signsight-hand-tracker/android/src/main/AndroidManifest.xml
+=======
+ADDED from /Users/kencamagay/Documents/GitHub/SignSight/app/modules/signsight-hand-tracker/android/src/main/AndroidManifest.xml:1:1-2:12
+INJECTED from /Users/kencamagay/Documents/GitHub/SignSight/app/modules/signsight-hand-tracker/android/src/main/AndroidManifest.xml:1:1-2:12
+	package
+		INJECTED from /Users/kencamagay/Documents/GitHub/SignSight/app/modules/signsight-hand-tracker/android/src/main/AndroidManifest.xml
+uses-sdk
+INJECTED from /Users/kencamagay/Documents/GitHub/SignSight/app/modules/signsight-hand-tracker/android/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /Users/kencamagay/Documents/GitHub/SignSight/app/modules/signsight-hand-tracker/android/src/main/AndroidManifest.xml
+INJECTED from /Users/kencamagay/Documents/GitHub/SignSight/app/modules/signsight-hand-tracker/android/src/main/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /Users/kencamagay/Documents/GitHub/SignSight/app/modules/signsight-hand-tracker/android/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /Users/kencamagay/Documents/GitHub/SignSight/app/modules/signsight-hand-tracker/android/src/main/AndroidManifest.xml
+>>>>>>> Stashed changes

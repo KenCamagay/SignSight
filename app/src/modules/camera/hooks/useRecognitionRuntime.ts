@@ -45,7 +45,8 @@ export function useRecognitionRuntime({
     useStreamingHandTracking({
       enabled,
       detectMode,
-      onFrameTick: () => {},
+      
+      
     });
 
   useEffect(() => {
