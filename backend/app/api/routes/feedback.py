@@ -1,7 +1,8 @@
 from typing import Optional
 
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 
+from app.core.rate_limit import RateLimiter
 from app.schemas.feedback import FeedbackIn
 from app.services.feedback_service import create_feedback_document
 
@@ -9,7 +10,17 @@ from app.services.feedback_service import create_feedback_document
 router = APIRouter()
 
 
-@router.post("/feedback")
+feedback_rate_limiter = RateLimiter(
+    max_requests=20,
+    window_seconds=60,
+    message="Too many feedback submissions."
+)
+
+
+@router.post(
+    "/feedback",
+    dependencies=[Depends(feedback_rate_limiter)]
+)
 async def create_feedback(body: FeedbackIn):
     result = await create_feedback_document(
         message=body.message,
@@ -19,12 +30,20 @@ async def create_feedback(body: FeedbackIn):
         app_version=body.app_version,
         platform=body.platform,
     )
+
     if result.get("ok"):
-        return {"ok": True, "id": result["id"]}
+        return {
+            "ok": True,
+            "id": result["id"]
+        }
+
     return result
 
 
-@router.post("/feedback_multipart")
+@router.post(
+    "/feedback_multipart",
+    dependencies=[Depends(feedback_rate_limiter)]
+)
 async def create_feedback_multipart(
     message: str = Form(...),
     category: str = Form("general"),

@@ -21,7 +21,7 @@ export default function HomePage() {
       />
     );
   }
-
+  
   return <AdminDashboard onLogout={() => { clearToken(); setTokenState(null); }} />;
 }
 
@@ -30,19 +30,48 @@ function Login({ onSuccess }: { onSuccess: (t: string) => void }) {
   const [password, setPassword] = useState("admin123");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [retrySeconds, setRetrySeconds] = useState(0);
 
   const submit = async () => {
-    try {
+  if (retrySeconds > 0) return;
+
+  try {
+    setErr("");
+    setLoading(true);
+
+    const res = await adminLogin(username, password);
+
+    onSuccess(res.token);
+  } catch (error: any) {
+    if (error.status === 429) {
+      const seconds =
+        error.retryAfter && error.retryAfter > 0
+          ? error.retryAfter
+          : 60;
+
+      setRetrySeconds(seconds);
       setErr("");
-      setLoading(true);
-      const res = await adminLogin(username, password);
-      onSuccess(res.token);
-    } catch {
-      setErr("Invalid login or server offline.");
-    } finally {
-      setLoading(false);
+    } else if (error.status === 401) {
+      setErr("Invalid username or password.");
+    } else if (error.status === 422) {
+      setErr("Please check your username and password.");
+    } else {
+      setErr("Unable to log in. Please try again.");
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
+
+    useEffect(() => {
+  if (retrySeconds <= 0) return;
+
+  const timer = setInterval(() => {
+    setRetrySeconds((prev) => Math.max(prev - 1, 0));
+  }, 1000);
+
+  return () => clearInterval(timer);
+}, [retrySeconds]);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(249,168,212,0.25),_transparent_30%),radial-gradient(circle_at_20%_70%,_rgba(147,197,253,0.18),_transparent_25%),radial-gradient(circle_at_80%_85%,_rgba(253,230,138,0.22),_transparent_28%),linear-gradient(135deg,_#FFF9F2_0%,_#FFF7ED_45%,_#FDF2F8_100%)] flex items-center justify-center p-6 text-[#1F2937]">
@@ -72,18 +101,31 @@ function Login({ onSuccess }: { onSuccess: (t: string) => void }) {
             type="password"
           />
 
-          {!!err && (
+          {retrySeconds > 0 ? (
             <div className="rounded-2xl border border-[#FCA5A5]/40 bg-[#FEE2E2] px-4 py-3 text-sm text-[#B91C1C]">
-              {err}
+              Too many login attempts. Try again in{" "}
+              <span className="font-bold">
+                {retrySeconds} second{retrySeconds !== 1 ? "s" : ""}
+              </span>.
             </div>
+          ) : (
+            !!err && (
+              <div className="rounded-2xl border border-[#FCA5A5]/40 bg-[#FEE2E2] px-4 py-3 text-sm text-[#B91C1C]">
+                {err}
+              </div>
+            )
           )}
 
           <button
             onClick={submit}
-            disabled={loading}
-            className="mt-2 w-full rounded-2xl border border-[#F9A8D4]/40 bg-[#F9A8D4]/30 px-4 py-3 font-extrabold text-[#831843] transition hover:bg-[#F9A8D4]/40 disabled:opacity-60"
+            disabled={loading || retrySeconds > 0}
+            className="mt-2 w-full rounded-2xl border border-[#F9A8D4]/40 bg-[#F9A8D4]/30 px-4 py-3 font-extrabold text-[#831843] transition hover:bg-[#F9A8D4]/40 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? "Signing in…" : "Login"}
+            {loading
+              ? "Signing in…"
+              : retrySeconds > 0
+                ? `Try again in ${retrySeconds}s`
+                : "Login"}
           </button>
         </div>
       </div>

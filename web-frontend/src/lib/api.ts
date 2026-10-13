@@ -1,5 +1,18 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE!;
 
+export class ApiError extends Error {
+  status: number;
+  retryAfter: number;
+
+  constructor(message: string, status: number, retryAfter = 0) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.retryAfter = retryAfter;
+  }
+}
+
+
 export function getToken() {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("admin_token");
@@ -24,9 +37,28 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   const res = await fetch(`${API_BASE}${path}`, { ...init, headers });
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `HTTP ${res.status}`);
+  let message = `HTTP ${res.status}`;
+
+  try {
+    const data = await res.json();
+
+    if (data?.detail) {
+      message = data.detail;
+    }
+  } catch {
+    // Response was not JSON
   }
+
+  const retryAfter = Number(
+    res.headers.get("Retry-After") || 0
+  );
+
+  throw new ApiError(
+    message,
+    res.status,
+    retryAfter
+  );
+}
 
   return (await res.json()) as T;
 }

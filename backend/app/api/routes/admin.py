@@ -1,6 +1,15 @@
 from typing import Optional
-
-from fastapi import APIRouter, Depends, File, Form, Header, Response, UploadFile
+from app.core.rate_limit import RateLimiter
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    Header,
+    HTTPException,
+    Response,
+    UploadFile,
+)
 
 from app.core.security import create_admin_token, require_admin, verify_admin_credentials
 from app.schemas.admin import AdminLoginIn, AuditIn
@@ -15,14 +24,29 @@ from app.services.feedback_service import list_feedback_view
 
 router = APIRouter()
 
+login_rate_limiter = RateLimiter(
+    max_requests=5,
+    window_seconds=60
+)
 
-@router.post("/admin/login")
+@router.post(
+    "/admin/login",
+    dependencies=[Depends(login_rate_limiter)]
+)
 def admin_login(body: AdminLoginIn):
-    if not verify_admin_credentials(body.username, body.password):
-        from fastapi import HTTPException
+    if not verify_admin_credentials(
+        body.username,
+        body.password
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid credentials"
+        )
 
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    return {"ok": True, "token": create_admin_token()}
+    return {
+        "ok": True,
+        "token": create_admin_token()
+    }
 
 
 @router.get("/admin/feedback")
