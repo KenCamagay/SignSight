@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
 import {
   FeedbackRow,
   listFeedback,
@@ -13,12 +20,35 @@ import {
   absoluteUrl,
 } from "../lib/api";
 
-const FEEDBACK_CATEGORIES = ["general", "ui", "bug", "feature", "performance"] as const;
+
+const FEEDBACK_CATEGORIES = [
+  "general",
+  "ui",
+  "bug",
+  "feature",
+  "performance",
+] as const;
+
 const RESOLVE_UNDO_MS = 5000;
 
-function clsx(...a: Array<string | false | null | undefined>) {
-  return a.filter(Boolean).join(" ");
+
+function clsx(
+  ...items: Array<string | false | null | undefined>
+) {
+  return items.filter(Boolean).join(" ");
 }
+
+
+/* =========================================================
+   SMALL UI HELPERS
+========================================================= */
+
+function InlineSpinner() {
+  return (
+    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[#176B49]/20 border-t-[#176B49]" />
+  );
+}
+
 
 function Pill({
   children,
@@ -28,16 +58,23 @@ function Pill({
   tone?: "neutral" | "ok" | "warn" | "danger";
 }) {
   const map = {
-    neutral: "bg-white border-[#E5E7EB] text-[#374151]",
-    ok: "bg-[#FCE7F3] border-[#F9A8D4]/40 text-[#BE185D]",
-    warn: "bg-[#FEF3C7] border-[#FDE68A]/40 text-[#92400E]",
-    danger: "bg-[#FEE2E2] border-[#FCA5A5]/40 text-[#B91C1C]",
+    neutral:
+      "border-[#E3E5DE] bg-[#F7F8F4] text-[#59635D]",
+
+    ok:
+      "border-[#B8DBC8] bg-[#EAF6EF] text-[#176B49]",
+
+    warn:
+      "border-[#F0D792] bg-[#FFF5D9] text-[#996D0C]",
+
+    danger:
+      "border-[#F0B9B1] bg-[#FFF0ED] text-[#B74E3E]",
   };
 
   return (
     <span
       className={clsx(
-        "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-extrabold tracking-wide",
+        "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-extrabold capitalize tracking-wide",
         map[tone]
       )}
     >
@@ -46,50 +83,6 @@ function Pill({
   );
 }
 
-function SectionCard({
-  title,
-  subtitle,
-  right,
-  children,
-}: {
-  title: string;
-  subtitle?: string;
-  right?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-3xl border border-[#E5E7EB] bg-white/85 shadow-sm backdrop-blur-xl">
-      <div className="flex items-start justify-between gap-4 border-b border-[#F3F4F6] p-4">
-        <div>
-          <div className="text-sm font-black text-[#1F2937]">{title}</div>
-          {subtitle && <div className="mt-1 text-xs text-[#6B7280]">{subtitle}</div>}
-        </div>
-        {right}
-      </div>
-      <div className="p-4">{children}</div>
-    </div>
-  );
-}
-
-function SkeletonRow() {
-  return (
-    <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFDF8] p-4">
-      <div className="flex items-center justify-between gap-4">
-        <div className="space-y-2">
-          <div className="h-3 w-40 rounded bg-[#F3F4F6]" />
-          <div className="h-3 w-56 rounded bg-[#E5E7EB]" />
-        </div>
-        <div className="h-8 w-24 rounded-xl bg-[#F3F4F6]" />
-      </div>
-    </div>
-  );
-}
-
-function InlineSpinner() {
-  return (
-    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[#F9A8D4]/40 border-t-[#BE185D]" />
-  );
-}
 
 function ExpandableText({
   text,
@@ -101,19 +94,26 @@ function ExpandableText({
   className?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
+
   const shouldClamp = text.length > previewChars;
-  const shown = !shouldClamp || expanded ? text : `${text.slice(0, previewChars).trim()}…`;
+
+  const shown =
+    !shouldClamp || expanded
+      ? text
+      : `${text.slice(0, previewChars).trim()}…`;
 
   return (
     <div className={className}>
       <span>{shown}</span>
+
       {shouldClamp && (
         <>
           {" "}
+
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="font-extrabold text-[#BE185D] transition hover:text-[#831843]"
+            className="font-extrabold text-[#176B49] transition hover:text-[#0F563A]"
           >
             {expanded ? "Show less" : "Show more"}
           </button>
@@ -123,7 +123,108 @@ function ExpandableText({
   );
 }
 
+
+function StatCard({
+  label,
+  value,
+  hint,
+  tone = "green",
+  icon,
+}: {
+  label: string;
+  value: number | string;
+  hint?: string;
+  tone?: "green" | "orange" | "neutral";
+  icon: React.ReactNode;
+}) {
+  const style = {
+    green: {
+      box: "border-[#D6E8DE] bg-[#EFF8F3]",
+      icon: "bg-[#DCEFE4] text-[#176B49]",
+      value: "text-[#176B49]",
+    },
+
+    orange: {
+      box: "border-[#F0DCA7] bg-[#FFF8E6]",
+      icon: "bg-[#FCE8B5] text-[#B57A08]",
+      value: "text-[#B57A08]",
+    },
+
+    neutral: {
+      box: "border-[#E2E3DD] bg-white",
+      icon: "bg-[#F1F2EC] text-[#58645E]",
+      value: "text-[#243A30]",
+    },
+  }[tone];
+
+  return (
+    <div
+      className={clsx(
+        "rounded-[22px] border p-5 transition hover:-translate-y-0.5 hover:shadow-sm",
+        style.box
+      )}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#8A908C]">
+            {label}
+          </p>
+
+          <p
+            className={clsx(
+              "mt-2 text-3xl font-black tracking-[-0.04em]",
+              style.value
+            )}
+          >
+            {value}
+          </p>
+
+          {hint && (
+            <p className="mt-1 text-xs text-[#8A908C]">
+              {hint}
+            </p>
+          )}
+        </div>
+
+        <div
+          className={clsx(
+            "flex h-11 w-11 items-center justify-center rounded-2xl",
+            style.icon
+          )}
+        >
+          {icon}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+function SkeletonRow() {
+  return (
+    <div className="animate-pulse rounded-[24px] border border-[#E5E5DF] bg-white p-5">
+      <div className="flex gap-4">
+        <div className="h-11 w-11 rounded-2xl bg-[#EEF0EA]" />
+
+        <div className="flex-1 space-y-3">
+          <div className="h-3 w-32 rounded bg-[#ECEDE8]" />
+
+          <div className="h-4 w-2/3 rounded bg-[#E3E5DF]" />
+
+          <div className="h-3 w-1/2 rounded bg-[#EFF0EB]" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+/* =========================================================
+   TOAST
+========================================================= */
+
 type ToastTone = "ok" | "warn" | "danger";
+
 type ToastItem = {
   id: string;
   message: string;
@@ -131,6 +232,7 @@ type ToastItem = {
   actionLabel?: string;
   onAction?: () => void;
 };
+
 
 function Toasts({
   items,
@@ -142,52 +244,64 @@ function Toasts({
   if (items.length === 0) return null;
 
   const toneMap: Record<ToastTone, string> = {
-    ok: "border-[#F9A8D4]/40 bg-white text-[#1F2937]",
-    warn: "border-[#FDE68A]/40 bg-white text-[#1F2937]",
-    danger: "border-[#FCA5A5]/40 bg-white text-[#1F2937]",
+    ok:
+      "border-[#B9DCC8] bg-white",
+
+    warn:
+      "border-[#EBCF82] bg-white",
+
+    danger:
+      "border-[#F0B8AE] bg-white",
+  };
+
+  const dotMap: Record<ToastTone, string> = {
+    ok: "bg-[#176B49]",
+    warn: "bg-[#D89A18]",
+    danger: "bg-[#C85948]",
   };
 
   return (
-    <div className="fixed right-4 top-4 z-[70] flex w-[min(92vw,380px)] flex-col gap-3">
-      {items.map((t) => (
+    <div className="fixed right-4 top-4 z-[80] flex w-[min(92vw,390px)] flex-col gap-3">
+      {items.map((toast) => (
         <div
-          key={t.id}
+          key={toast.id}
           className={clsx(
-            "rounded-2xl border px-4 py-3 shadow-xl backdrop-blur-xl",
-            toneMap[t.tone || "ok"]
+            "rounded-[20px] border bg-white px-4 py-4 shadow-[0_16px_50px_rgba(35,55,46,0.16)]",
+            toneMap[toast.tone || "ok"]
           )}
         >
           <div className="flex items-start gap-3">
-            <div className="min-w-0 flex-1 text-sm font-semibold text-[#374151]">{t.message}</div>
+            <span
+              className={clsx(
+                "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full",
+                dotMap[toast.tone || "ok"]
+              )}
+            />
+
+            <p className="min-w-0 flex-1 text-sm font-semibold leading-6 text-[#35473E]">
+              {toast.message}
+            </p>
+
             <button
               type="button"
-              onClick={() => onClose(t.id)}
-              className="text-xs font-black text-[#9CA3AF] transition hover:text-[#6B7280]"
+              onClick={() => onClose(toast.id)}
+              className="text-sm font-bold text-[#A0A49F] transition hover:text-[#48564F]"
             >
               ✕
             </button>
           </div>
 
-          {(t.actionLabel || true) && (
-            <div className="mt-3 flex items-center gap-2">
-              {t.actionLabel && t.onAction && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    t.onAction?.();
-                    onClose(t.id);
-                  }}
-                  className="rounded-xl border border-[#F9A8D4]/40 bg-[#FCE7F3] px-3 py-1.5 text-xs font-black text-[#BE185D] transition hover:bg-[#F9A8D4]/20"
-                >
-                  {t.actionLabel}
-                </button>
-              )}
+          {toast.actionLabel && toast.onAction && (
+            <div className="mt-3 pl-5">
               <button
                 type="button"
-                onClick={() => onClose(t.id)}
-                className="rounded-xl border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-black text-[#6B7280] transition hover:bg-[#FFF7ED]"
+                onClick={() => {
+                  toast.onAction?.();
+                  onClose(toast.id);
+                }}
+                className="rounded-xl bg-[#E8F4ED] px-3 py-1.5 text-xs font-black text-[#176B49] transition hover:bg-[#DCEDE4]"
               >
-                Dismiss
+                {toast.actionLabel}
               </button>
             </div>
           )}
@@ -197,59 +311,173 @@ function Toasts({
   );
 }
 
+
 type PendingResolve = {
   timeoutId: number;
   toastId: string;
 };
 
-export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
-  const [tab, setTab] = useState<"feedback" | "audit">("feedback");
 
-  const [rows, setRows] = useState<FeedbackRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isRefreshingFeedback, setIsRefreshingFeedback] = useState(false);
+/* =========================================================
+   DASHBOARD
+========================================================= */
+
+export default function AdminDashboard({
+  onLogout,
+}: {
+  onLogout: () => void;
+}) {
+  const [tab, setTab] =
+    useState<"feedback" | "audit">("feedback");
+
+
+  /* ---------------- FEEDBACK ---------------- */
+
+  const [rows, setRows] =
+    useState<FeedbackRow[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [
+    isRefreshingFeedback,
+    setIsRefreshingFeedback,
+  ] = useState(false);
+
   const [err, setErr] = useState("");
 
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState<"" | "open" | "resolved">("open");
-  const [category, setCategory] = useState("");
 
-  const [auditRows, setAuditRows] = useState<AuditRow[]>([]);
-  const [auditLoading, setAuditLoading] = useState(false);
-  const [isRefreshingAudit, setIsRefreshingAudit] = useState(false);
-  const [auditErr, setAuditErr] = useState("");
+  const [status, setStatus] =
+    useState<"" | "open" | "resolved">(
+      "open"
+    );
+
+  const [category, setCategory] =
+    useState("");
+
+
+  /* ---------------- AUDIT ---------------- */
+
+  const [auditRows, setAuditRows] =
+    useState<AuditRow[]>([]);
+
+  const [auditLoading, setAuditLoading] =
+    useState(false);
+
+  const [
+    isRefreshingAudit,
+    setIsRefreshingAudit,
+  ] = useState(false);
+
+  const [auditErr, setAuditErr] =
+    useState("");
 
   const [aq, setAq] = useState("");
-  const [aCategory, setACategory] = useState("");
+  const [aCategory, setACategory] =
+    useState("");
 
-  const [aTitle, setATitle] = useState("");
-  const [aDetails, setADetails] = useState("");
-  const [aCreateCategory, setACreateCategory] = useState("other");
-  const [aFiles, setAFiles] = useState<File[]>([]);
-  const [aCreating, setACreating] = useState(false);
+  const [aTitle, setATitle] =
+    useState("");
 
-  const [isExporting, setIsExporting] = useState(false);
-  const [imgModal, setImgModal] = useState<{ open: boolean; src: string } | null>(null);
-  const [toasts, setToasts] = useState<ToastItem[]>([]);
-  const [pendingResolveIds, setPendingResolveIds] = useState<Record<string, true>>({});
+  const [aDetails, setADetails] =
+    useState("");
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const feedbackFirstLoadRef = useRef(false);
-  const auditFirstLoadRef = useRef(false);
-  const feedbackReqIdRef = useRef(0);
-  const auditReqIdRef = useRef(0);
-  const pendingResolveMapRef = useRef<Record<string, PendingResolve>>({});
+  const [
+    aCreateCategory,
+    setACreateCategory,
+  ] = useState("other");
+
+  const [aFiles, setAFiles] =
+    useState<File[]>([]);
+
+  const [aCreating, setACreating] =
+    useState(false);
+
+
+  /* ---------------- COMMON ---------------- */
+
+  const [isExporting, setIsExporting] =
+    useState(false);
+
+  const [imgModal, setImgModal] =
+    useState<{
+      open: boolean;
+      src: string;
+    } | null>(null);
+
+  const [toasts, setToasts] =
+    useState<ToastItem[]>([]);
+
+  const [
+    pendingResolveIds,
+    setPendingResolveIds,
+  ] = useState<Record<string, true>>({});
+
+
+  const fileInputRef =
+    useRef<HTMLInputElement | null>(null);
+
+  const feedbackFirstLoadRef =
+    useRef(false);
+
+  const auditFirstLoadRef =
+    useRef(false);
+
+  const feedbackReqIdRef =
+    useRef(0);
+
+  const auditReqIdRef =
+    useRef(0);
+
+  const pendingResolveMapRef =
+    useRef<
+      Record<string, PendingResolve>
+    >({});
+
+
+  /* =========================================================
+     STYLES
+  ========================================================= */
 
   const inputBase =
-    "rounded-2xl bg-white border border-[#E5E7EB] px-4 py-3 text-[#1F2937] outline-none transition focus:border-[#F9A8D4] focus:ring-2 focus:ring-[#FCE7F3]";
-  const btnBase =
-    "rounded-2xl px-4 py-2 border font-extrabold transition active:scale-[0.99] disabled:active:scale-100";
-  const btnGhost =
-    "bg-white border-[#E5E7EB] text-[#374151] hover:bg-[#FFF7ED] disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF] disabled:hover:bg-[#F9FAFB]";
-  const btnPrimary =
-    "bg-[#F9A8D4]/30 border-[#F9A8D4]/40 text-[#831843] hover:bg-[#F9A8D4]/40 disabled:bg-[#F9FAFB] disabled:border-[#E5E7EB] disabled:text-[#9CA3AF] disabled:hover:bg-[#F9FAFB]";
+    "w-full rounded-[16px] border border-[#DDDFD8] bg-white px-4 py-3 text-sm font-medium text-[#263A31] outline-none transition placeholder:text-[#A4AAA6] focus:border-[#176B49] focus:ring-4 focus:ring-[#176B49]/8";
 
-  const openCount = useMemo(() => rows.filter((r) => !r.resolved).length, [rows]);
+  const btnBase =
+    "inline-flex items-center justify-center gap-2 rounded-[14px] border px-4 py-2.5 text-sm font-extrabold transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50";
+
+  const btnGhost =
+    "border-[#DDE0D9] bg-white text-[#536159] hover:border-[#CBD1CA] hover:bg-[#F7F8F4]";
+
+  const btnPrimary =
+    "border-[#176B49] bg-[#176B49] text-white shadow-[0_7px_18px_rgba(23,107,73,0.17)] hover:border-[#125B3D] hover:bg-[#125B3D]";
+
+  const btnOrange =
+    "border-[#D89A18] bg-[#D89A18] text-white shadow-[0_7px_18px_rgba(216,154,24,0.16)] hover:border-[#C5890E] hover:bg-[#C5890E]";
+
+
+  /* =========================================================
+     COUNTS
+  ========================================================= */
+
+  const openCount = useMemo(
+    () =>
+      rows.filter((row) => !row.resolved)
+        .length,
+    [rows]
+  );
+
+  const resolvedCount = useMemo(
+    () =>
+      rows.filter((row) => row.resolved)
+        .length,
+    [rows]
+  );
+
+
+  /* =========================================================
+     AUDIT IMAGE PREVIEWS
+  ========================================================= */
 
   const auditPreviews = useMemo(
     () =>
@@ -263,9 +491,16 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   useEffect(() => {
     return () => {
-      auditPreviews.forEach((p) => URL.revokeObjectURL(p.url));
+      auditPreviews.forEach((preview) =>
+        URL.revokeObjectURL(preview.url)
+      );
     };
   }, [auditPreviews]);
+
+
+  /* =========================================================
+     TOAST HELPERS
+  ========================================================= */
 
   const addToast = useCallback(
     ({
@@ -281,12 +516,29 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       onAction?: () => void;
       duration?: number;
     }) => {
-      const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      setToasts((prev) => [...prev, { id, message, tone, actionLabel, onAction }]);
+      const id =
+        `${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2)}`;
+
+      setToasts((prev) => [
+        ...prev,
+        {
+          id,
+          message,
+          tone,
+          actionLabel,
+          onAction,
+        },
+      ]);
 
       if (duration > 0) {
         window.setTimeout(() => {
-          setToasts((prev) => prev.filter((t) => t.id !== id));
+          setToasts((prev) =>
+            prev.filter(
+              (toast) => toast.id !== id
+            )
+          );
         }, duration);
       }
 
@@ -295,9 +547,21 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     []
   );
 
-  const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+  const removeToast = useCallback(
+    (id: string) => {
+      setToasts((prev) =>
+        prev.filter(
+          (toast) => toast.id !== id
+        )
+      );
+    },
+    []
+  );
+
+
+  /* =========================================================
+     FETCH FEEDBACK
+  ========================================================= */
 
   const fetchRows = useCallback(
     async ({
@@ -308,12 +572,16 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       background = false,
     }: {
       search?: string;
-      currentStatus?: "" | "open" | "resolved";
+      currentStatus?:
+        | ""
+        | "open"
+        | "resolved";
       currentCategory?: string;
       initial?: boolean;
       background?: boolean;
     } = {}) => {
-      const reqId = ++feedbackReqIdRef.current;
+      const reqId =
+        ++feedbackReqIdRef.current;
 
       try {
         setErr("");
@@ -327,25 +595,59 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         }
 
         const res = await listFeedback({
-          q: search.trim() || undefined,
-          status: currentStatus || undefined,
-          category: currentCategory || undefined,
+          q:
+            search.trim() ||
+            undefined,
+
+          status:
+            currentStatus ||
+            undefined,
+
+          category:
+            currentCategory ||
+            undefined,
+
           limit: 300,
         });
 
-        if (reqId !== feedbackReqIdRef.current) return;
+        if (
+          reqId !==
+          feedbackReqIdRef.current
+        ) {
+          return;
+        }
+
         setRows(res);
       } catch {
-        if (reqId !== feedbackReqIdRef.current) return;
-        setErr("Failed to load feedback (token expired or server offline).");
+        if (
+          reqId !==
+          feedbackReqIdRef.current
+        ) {
+          return;
+        }
+
+        setErr(
+          "Failed to load feedback. Your session may have expired or the server may be unavailable."
+        );
       } finally {
-        if (reqId !== feedbackReqIdRef.current) return;
+        if (
+          reqId !==
+          feedbackReqIdRef.current
+        ) {
+          return;
+        }
+
         setLoading(false);
         setIsRefreshingFeedback(false);
       }
     },
     [q, status, category]
   );
+
+
+  /* =========================================================
+     FETCH AUDIT
+  ========================================================= */
 
   const fetchAudit = useCallback(
     async ({
@@ -359,7 +661,8 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       initial?: boolean;
       background?: boolean;
     } = {}) => {
-      const reqId = ++auditReqIdRef.current;
+      const reqId =
+        ++auditReqIdRef.current;
 
       try {
         setAuditErr("");
@@ -373,24 +676,55 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         }
 
         const res = await listAudit({
-          q: search.trim() || undefined,
-          category: currentCategory || undefined,
+          q:
+            search.trim() ||
+            undefined,
+
+          category:
+            currentCategory ||
+            undefined,
+
           limit: 300,
         });
 
-        if (reqId !== auditReqIdRef.current) return;
+        if (
+          reqId !==
+          auditReqIdRef.current
+        ) {
+          return;
+        }
+
         setAuditRows(res);
       } catch {
-        if (reqId !== auditReqIdRef.current) return;
-        setAuditErr("Failed to load audit trail (token expired or server offline).");
+        if (
+          reqId !==
+          auditReqIdRef.current
+        ) {
+          return;
+        }
+
+        setAuditErr(
+          "Failed to load the audit trail. Your session may have expired or the server may be unavailable."
+        );
       } finally {
-        if (reqId !== auditReqIdRef.current) return;
+        if (
+          reqId !==
+          auditReqIdRef.current
+        ) {
+          return;
+        }
+
         setAuditLoading(false);
         setIsRefreshingAudit(false);
       }
     },
     [aq, aCategory]
   );
+
+
+  /* =========================================================
+     FILTER HELPERS
+  ========================================================= */
 
   const clearFeedbackFilters = () => {
     setQ("");
@@ -403,22 +737,58 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     setACategory("");
   };
 
-  const onPickAuditFiles = (files: FileList | null) => {
+
+  /* =========================================================
+     AUDIT FILES
+  ========================================================= */
+
+  const onPickAuditFiles = (
+    files: FileList | null
+  ) => {
     if (!files) return;
-    const arr = Array.from(files).filter((f) => f.type.startsWith("image/"));
-    const next = [...aFiles, ...arr].slice(0, 3);
+
+    const arr = Array.from(files).filter(
+      (file) =>
+        file.type.startsWith("image/")
+    );
+
+    const next = [
+      ...aFiles,
+      ...arr,
+    ].slice(0, 3);
+
     setAFiles(next);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
-  const removeAuditFile = (name: string) => {
-    setAFiles((prev) => prev.filter((f) => f.name !== name));
+
+  const removeAuditFile = (
+    name: string
+  ) => {
+    setAFiles((prev) =>
+      prev.filter(
+        (file) => file.name !== name
+      )
+    );
   };
+
+
+  /* =========================================================
+     CREATE AUDIT
+  ========================================================= */
 
   const createAudit = async () => {
     const title = aTitle.trim();
+
     if (title.length < 2) {
-      addToast({ message: "Title is too short.", tone: "warn" });
+      addToast({
+        message: "Title is too short.",
+        tone: "warn",
+      });
+
       return;
     }
 
@@ -426,10 +796,24 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       setACreating(true);
 
       const fd = new FormData();
+
       fd.append("title", title);
-      fd.append("category", aCreateCategory);
-      if (aDetails.trim()) fd.append("details", aDetails.trim());
-      aFiles.forEach((f) => fd.append("images", f));
+
+      fd.append(
+        "category",
+        aCreateCategory
+      );
+
+      if (aDetails.trim()) {
+        fd.append(
+          "details",
+          aDetails.trim()
+        );
+      }
+
+      aFiles.forEach((file) =>
+        fd.append("images", file)
+      );
 
       await createAuditMultipart(fd);
 
@@ -438,203 +822,452 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       setACreateCategory("other");
       setAFiles([]);
 
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
 
-      addToast({ message: "Audit entry created successfully.", tone: "ok" });
+      addToast({
+        message:
+          "Audit entry created successfully.",
+        tone: "ok",
+      });
 
       if (tab === "audit") {
-        await fetchAudit({ background: true });
+        await fetchAudit({
+          background: true,
+        });
       }
     } catch {
-      addToast({ message: "Create audit failed. Check server or token.", tone: "danger" });
+      addToast({
+        message:
+          "Could not create the audit entry. Check the server or your login session.",
+        tone: "danger",
+      });
     } finally {
       setACreating(false);
     }
   };
 
-  const undoResolve = useCallback((id: string) => {
-    const pending = pendingResolveMapRef.current[id];
-    if (!pending) return;
 
-    window.clearTimeout(pending.timeoutId);
-    delete pendingResolveMapRef.current[id];
+  /* =========================================================
+     RESOLVE / UNDO
+  ========================================================= */
 
-    setPendingResolveIds((prev) => {
-      const next = { ...prev };
-      delete next[id];
-      return next;
-    });
+  const undoResolve = useCallback(
+    (id: string) => {
+      const pending =
+        pendingResolveMapRef.current[id];
 
-    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, resolved: false } : row)));
-  }, []);
+      if (!pending) return;
+
+      window.clearTimeout(
+        pending.timeoutId
+      );
+
+      delete pendingResolveMapRef.current[
+        id
+      ];
+
+      setPendingResolveIds((prev) => {
+        const next = { ...prev };
+
+        delete next[id];
+
+        return next;
+      });
+
+      setRows((prev) =>
+        prev.map((row) =>
+          row.id === id
+            ? {
+                ...row,
+                resolved: false,
+              }
+            : row
+        )
+      );
+    },
+    []
+  );
+
 
   const commitResolve = useCallback(
     async (id: string) => {
       try {
         await resolveFeedback(id);
 
-        setPendingResolveIds((prev) => {
-          const next = { ...prev };
-          delete next[id];
-          return next;
-        });
-        delete pendingResolveMapRef.current[id];
+        setPendingResolveIds(
+          (prev) => {
+            const next = {
+              ...prev,
+            };
 
-        addToast({ message: "Feedback marked as resolved.", tone: "ok" });
-        await fetchRows({ background: true });
+            delete next[id];
+
+            return next;
+          }
+        );
+
+        delete pendingResolveMapRef.current[
+          id
+        ];
+
+        addToast({
+          message:
+            "Feedback marked as resolved.",
+          tone: "ok",
+        });
+
+        await fetchRows({
+          background: true,
+        });
       } catch {
-        setRows((prev) => prev.map((row) => (row.id === id ? { ...row, resolved: false } : row)));
+        setRows((prev) =>
+          prev.map((row) =>
+            row.id === id
+              ? {
+                  ...row,
+                  resolved: false,
+                }
+              : row
+          )
+        );
 
-        setPendingResolveIds((prev) => {
-          const next = { ...prev };
-          delete next[id];
-          return next;
+        setPendingResolveIds(
+          (prev) => {
+            const next = {
+              ...prev,
+            };
+
+            delete next[id];
+
+            return next;
+          }
+        );
+
+        delete pendingResolveMapRef.current[
+          id
+        ];
+
+        addToast({
+          message:
+            "Resolve failed. Changes were reverted.",
+          tone: "danger",
+          duration: 4500,
         });
-
-        delete pendingResolveMapRef.current[id];
-
-        addToast({ message: "Resolve failed. Changes were reverted.", tone: "danger", duration: 4500 });
       }
     },
     [addToast, fetchRows]
   );
 
+
   const markResolved = useCallback(
     (id: string) => {
-      if (pendingResolveMapRef.current[id]) return;
+      if (
+        pendingResolveMapRef.current[id]
+      ) {
+        return;
+      }
 
-      setRows((prev) => prev.map((row) => (row.id === id ? { ...row, resolved: true } : row)));
-      setPendingResolveIds((prev) => ({ ...prev, [id]: true }));
+      setRows((prev) =>
+        prev.map((row) =>
+          row.id === id
+            ? {
+                ...row,
+                resolved: true,
+              }
+            : row
+        )
+      );
+
+      setPendingResolveIds(
+        (prev) => ({
+          ...prev,
+          [id]: true,
+        })
+      );
 
       const toastId = addToast({
-        message: `Marked as resolved. Undo available for ${RESOLVE_UNDO_MS / 1000}s.`,
+        message: `Marked as resolved. Undo available for ${
+          RESOLVE_UNDO_MS / 1000
+        }s.`,
         tone: "ok",
         actionLabel: "Undo",
-        onAction: () => undoResolve(id),
+        onAction: () =>
+          undoResolve(id),
         duration: RESOLVE_UNDO_MS,
       });
 
-      const timeoutId = window.setTimeout(() => {
-        commitResolve(id);
-        removeToast(toastId);
-      }, RESOLVE_UNDO_MS);
+      const timeoutId =
+        window.setTimeout(() => {
+          commitResolve(id);
+          removeToast(toastId);
+        }, RESOLVE_UNDO_MS);
 
-      pendingResolveMapRef.current[id] = { timeoutId, toastId };
+      pendingResolveMapRef.current[
+        id
+      ] = {
+        timeoutId,
+        toastId,
+      };
     },
-    [addToast, commitResolve, removeToast, undoResolve]
+    [
+      addToast,
+      commitResolve,
+      removeToast,
+      undoResolve,
+    ]
   );
+
+
+  /* =========================================================
+     EXPORT CSV
+  ========================================================= */
 
   const exportCsv = async () => {
     const token = getToken();
+
     if (!token) {
-      addToast({ message: "Missing token. Please log in again.", tone: "warn" });
+      addToast({
+        message:
+          "Missing login token. Please log in again.",
+        tone: "warn",
+      });
+
       return;
     }
 
     try {
       setIsExporting(true);
 
-      const API = process.env.NEXT_PUBLIC_API_BASE!;
-      const res = await fetch(`${API}/admin/export.csv`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const API =
+        process.env
+          .NEXT_PUBLIC_API_BASE!;
+
+      const res = await fetch(
+        `${API}/admin/export.csv`,
+        {
+          headers: {
+            Authorization:
+              `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!res.ok) {
-        addToast({ message: "Export failed.", tone: "danger" });
+        addToast({
+          message: "Export failed.",
+          tone: "danger",
+        });
+
         return;
       }
 
       const text = await res.text();
-      const blob = new Blob([text], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
 
-      const a = document.createElement("a");
+      const blob = new Blob(
+        [text],
+        {
+          type: "text/csv",
+        }
+      );
+
+      const url =
+        URL.createObjectURL(blob);
+
+      const a =
+        document.createElement("a");
+
       a.href = url;
-      a.download = `signsight_feedback_${new Date().toISOString().slice(0, 10)}.csv`;
+
+      a.download =
+        `signsight_feedback_${
+          new Date()
+            .toISOString()
+            .slice(0, 10)
+        }.csv`;
+
       a.click();
 
       URL.revokeObjectURL(url);
-      addToast({ message: "CSV exported successfully.", tone: "ok" });
+
+      addToast({
+        message:
+          "CSV exported successfully.",
+        tone: "ok",
+      });
     } catch {
-      addToast({ message: "Export failed.", tone: "danger" });
+      addToast({
+        message: "Export failed.",
+        tone: "danger",
+      });
     } finally {
       setIsExporting(false);
     }
   };
 
+
+  /* =========================================================
+     INITIAL LOAD + LIVE SEARCH
+  ========================================================= */
+
   useEffect(() => {
-    if (tab === "feedback" && !feedbackFirstLoadRef.current) {
-      feedbackFirstLoadRef.current = true;
-      fetchRows({ initial: true });
+    if (
+      tab === "feedback" &&
+      !feedbackFirstLoadRef.current
+    ) {
+      feedbackFirstLoadRef.current =
+        true;
+
+      fetchRows({
+        initial: true,
+      });
     }
 
-    if (tab === "audit" && !auditFirstLoadRef.current) {
-      auditFirstLoadRef.current = true;
-      fetchAudit({ initial: true });
+    if (
+      tab === "audit" &&
+      !auditFirstLoadRef.current
+    ) {
+      auditFirstLoadRef.current =
+        true;
+
+      fetchAudit({
+        initial: true,
+      });
     }
   }, [tab, fetchRows, fetchAudit]);
 
-  useEffect(() => {
-    if (tab !== "feedback" || !feedbackFirstLoadRef.current) return;
-
-    const t = window.setTimeout(() => {
-      fetchRows({ background: true });
-    }, 400);
-
-    return () => window.clearTimeout(t);
-  }, [q, status, category, tab, fetchRows]);
 
   useEffect(() => {
-    if (tab !== "audit" || !auditFirstLoadRef.current) return;
+    if (
+      tab !== "feedback" ||
+      !feedbackFirstLoadRef.current
+    ) {
+      return;
+    }
 
-    const t = window.setTimeout(() => {
-      fetchAudit({ background: true });
-    }, 400);
+    const timer =
+      window.setTimeout(() => {
+        fetchRows({
+          background: true,
+        });
+      }, 400);
 
-    return () => window.clearTimeout(t);
-  }, [aq, aCategory, tab, fetchAudit]);
+    return () =>
+      window.clearTimeout(timer);
+  }, [
+    q,
+    status,
+    category,
+    tab,
+    fetchRows,
+  ]);
+
+
+  useEffect(() => {
+    if (
+      tab !== "audit" ||
+      !auditFirstLoadRef.current
+    ) {
+      return;
+    }
+
+    const timer =
+      window.setTimeout(() => {
+        fetchAudit({
+          background: true,
+        });
+      }, 400);
+
+    return () =>
+      window.clearTimeout(timer);
+  }, [
+    aq,
+    aCategory,
+    tab,
+    fetchAudit,
+  ]);
+
+
+  /* =========================================================
+     IMAGE MODAL
+  ========================================================= */
 
   useEffect(() => {
     if (!imgModal?.open) return;
 
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setImgModal(null);
+    const onKeyDown = (
+      event: KeyboardEvent
+    ) => {
+      if (event.key === "Escape") {
+        setImgModal(null);
+      }
     };
 
-    document.addEventListener("keydown", onKeyDown);
-    document.body.style.overflow = "hidden";
+    document.addEventListener(
+      "keydown",
+      onKeyDown
+    );
+
+    document.body.style.overflow =
+      "hidden";
 
     return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = "";
+      document.removeEventListener(
+        "keydown",
+        onKeyDown
+      );
+
+      document.body.style.overflow =
+        "";
     };
   }, [imgModal]);
 
+
   useEffect(() => {
     return () => {
-      Object.values(pendingResolveMapRef.current).forEach((item) => {
-        window.clearTimeout(item.timeoutId);
+      Object.values(
+        pendingResolveMapRef.current
+      ).forEach((item) => {
+        window.clearTimeout(
+          item.timeoutId
+        );
       });
     };
   }, []);
+
 
   const ImgModal = () => {
     if (!imgModal?.open) return null;
 
     return (
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-        onClick={() => setImgModal(null)}
+        className="fixed inset-0 z-[70] flex items-center justify-center bg-[#102A20]/80 p-5 backdrop-blur-sm"
+        onClick={() =>
+          setImgModal(null)
+        }
       >
         <div
-          className="w-full max-w-4xl rounded-3xl border border-[#E5E7EB] bg-white p-3 shadow-2xl"
-          onClick={(e) => e.stopPropagation()}
+          className="w-full max-w-5xl overflow-hidden rounded-[28px] bg-white p-3 shadow-2xl"
+          onClick={(e) =>
+            e.stopPropagation()
+          }
         >
-          <img src={imgModal.src} alt="attachment" className="h-auto w-full rounded-2xl" />
-          <div className="mt-3 flex justify-end">
+          <img
+            src={imgModal.src}
+            alt="attachment"
+            className="max-h-[78vh] w-full rounded-[20px] object-contain"
+          />
+
+          <div className="flex justify-end p-2 pt-4">
             <button
-              onClick={() => setImgModal(null)}
-              className="rounded-2xl border border-[#E5E7EB] bg-[#FFF7ED] px-4 py-2 font-extrabold text-[#374151] transition hover:bg-[#FCE7F3]"
+              onClick={() =>
+                setImgModal(null)
+              }
+              className={clsx(
+                btnBase,
+                btnGhost
+              )}
             >
               Close
             </button>
@@ -644,624 +1277,1432 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     );
   };
 
-  const feedbackHasFilters = !!q.trim() || !!status || !!category;
-  const auditHasFilters = !!aq.trim() || !!aCategory;
+
+  const feedbackHasFilters =
+    !!q.trim() ||
+    !!category ||
+    status !== "open";
+
+  const auditHasFilters =
+    !!aq.trim() || !!aCategory;
+
+
+  /* =========================================================
+     ICONS
+  ========================================================= */
+
+  const feedbackIcon = (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-5 w-5"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M7.5 8.25h9m-9 3h6m-8.25 9l2.25-3h9.75A3.75 3.75 0 0021 13.5v-6a3.75 3.75 0 00-3.75-3.75H6.75A3.75 3.75 0 003 7.5v6a3.75 3.75 0 002.25 3.43V20.25z"
+      />
+    </svg>
+  );
+
+  const auditIcon = (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-5 w-5"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 5.25h6m-6 4.5h6m-6 4.5h4.5M6.75 3h10.5A2.25 2.25 0 0119.5 5.25v13.5A2.25 2.25 0 0117.25 21H6.75A2.25 2.25 0 014.5 18.75V5.25A2.25 2.25 0 016.75 3z"
+      />
+    </svg>
+  );
+
+
+  /* =========================================================
+     PAGE
+  ========================================================= */
 
   return (
-    <div className="min-h-screen text-[#1F2937]">
-      <Toasts items={toasts} onClose={removeToast} />
+    <div className="min-h-screen bg-[#F5F4EE] text-[#26382F]">
+      <Toasts
+        items={toasts}
+        onClose={removeToast}
+      />
+
       <ImgModal />
 
-      <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(249,168,212,0.25),_transparent_30%),radial-gradient(circle_at_20%_70%,_rgba(147,197,253,0.18),_transparent_25%),radial-gradient(circle_at_80%_85%,_rgba(253,230,138,0.22),_transparent_28%),linear-gradient(135deg,_#FFF9F2_0%,_#FFF7ED_45%,_#FDF2F8_100%)]" />
-      </div>
 
-      <div className="sticky top-0 z-20 border-b border-[#F3E8FF] bg-white/70 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
+      {/* =====================================================
+          DESKTOP SIDEBAR
+      ====================================================== */}
+
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] flex-col bg-[#176B49] lg:flex">
+        <div className="relative flex h-full flex-col overflow-hidden px-5 py-6">
+
+          {/* decoration */}
+          <div className="pointer-events-none absolute -left-24 -top-24 h-60 w-60 rounded-full border-[45px] border-white/[0.035]" />
+
+          <div className="pointer-events-none absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-[#D89A18]/10 blur-2xl" />
+
+
+          {/* Logo */}
+          <div className="relative z-10 flex items-center gap-3 px-2">
+            <div className="flex h-12 w-12 items-center justify-center rounded-[17px] bg-[#FFF9E9] shadow-md">
+              <span className="font-black text-[#176B49]">
+                SS
+              </span>
+            </div>
+
+            <div className="leading-none">
+              <p className="text-lg font-black tracking-tight text-white">
+                SIGN
+              </p>
+
+              <p className="mt-1 text-lg font-black tracking-tight text-[#F0B63C]">
+                SIGHT
+              </p>
+            </div>
+          </div>
+
+
+          {/* navigation */}
+          <div className="relative z-10 mt-12">
+            <p className="px-3 text-[10px] font-black uppercase tracking-[0.2em] text-white/35">
+              Workspace
+            </p>
+
+            <nav className="mt-3 space-y-2">
+              <button
+                onClick={() =>
+                  setTab("feedback")
+                }
+                className={clsx(
+                  "flex w-full items-center gap-3 rounded-[16px] px-4 py-3 text-left text-sm font-extrabold transition",
+                  tab === "feedback"
+                    ? "bg-white text-[#176B49] shadow-[0_8px_20px_rgba(0,0,0,0.12)]"
+                    : "text-white/65 hover:bg-white/10 hover:text-white"
+                )}
+              >
+                <span
+                  className={clsx(
+                    "flex h-8 w-8 items-center justify-center rounded-xl",
+                    tab === "feedback"
+                      ? "bg-[#EAF5EE]"
+                      : "bg-white/10"
+                  )}
+                >
+                  {feedbackIcon}
+                </span>
+
+                Feedback
+              </button>
+
+              <button
+                onClick={() =>
+                  setTab("audit")
+                }
+                className={clsx(
+                  "flex w-full items-center gap-3 rounded-[16px] px-4 py-3 text-left text-sm font-extrabold transition",
+                  tab === "audit"
+                    ? "bg-white text-[#176B49] shadow-[0_8px_20px_rgba(0,0,0,0.12)]"
+                    : "text-white/65 hover:bg-white/10 hover:text-white"
+                )}
+              >
+                <span
+                  className={clsx(
+                    "flex h-8 w-8 items-center justify-center rounded-xl",
+                    tab === "audit"
+                      ? "bg-[#FFF3D3] text-[#B27808]"
+                      : "bg-white/10"
+                  )}
+                >
+                  {auditIcon}
+                </span>
+
+                Audit Trail
+              </button>
+            </nav>
+          </div>
+
+
+          {/* bottom */}
+          <div className="relative z-10 mt-auto">
+            <div className="mb-4 rounded-[18px] border border-white/10 bg-white/[0.06] p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#D89A18]/20 text-sm font-black text-[#FFD879]">
+                  A
+                </div>
+
+                <div>
+                  <p className="text-xs font-extrabold text-white">
+                    Administrator
+                  </p>
+
+                  <p className="mt-0.5 text-[10px] text-white/40">
+                    Secure session
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={onLogout}
+              className="flex w-full items-center gap-3 rounded-[15px] px-4 py-3 text-sm font-extrabold text-white/55 transition hover:bg-white/10 hover:text-white"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                className="h-5 w-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m-6-3h10.5m0 0l-3-3m3 3l-3 3"
+                />
+              </svg>
+
+              Log out
+            </button>
+          </div>
+        </div>
+      </aside>
+
+
+      {/* =====================================================
+          MOBILE HEADER
+      ====================================================== */}
+
+      <div className="sticky top-0 z-30 border-b border-[#DFE1DA] bg-[#176B49] px-4 py-3 lg:hidden">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#F9A8D4]/30 bg-[#FCE7F3] shadow-sm">
-              <span className="font-black text-[#BE185D]">SS</span>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FFF8E4] text-xs font-black text-[#176B49]">
+              SS
             </div>
 
             <div>
-              <div className="text-lg font-black leading-tight text-[#1F2937]">
-                {tab === "feedback" ? "Feedback Inbox" : "Audit Trail"}
-              </div>
-              <div className="mt-0.5 text-xs text-[#6B7280]">
-                {tab === "feedback"
-                  ? `Open: ${openCount} • Total: ${rows.length}`
-                  : `Total: ${auditRows.length}`}
-              </div>
+              <p className="text-xs font-black text-white">
+                SIGN
+                <span className="ml-1 text-[#F0B63C]">
+                  SIGHT
+                </span>
+              </p>
+
+              <p className="text-[10px] text-white/45">
+                Admin
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {tab === "feedback" && (
-              <button
-                onClick={exportCsv}
-                disabled={isExporting || loading || isRefreshingFeedback}
-                className={clsx(btnBase, btnGhost)}
-              >
-                {isExporting ? "Exporting..." : "Export CSV"}
-              </button>
+          <button
+            onClick={onLogout}
+            className="rounded-xl bg-white/10 px-3 py-2 text-xs font-bold text-white"
+          >
+            Logout
+          </button>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button
+            onClick={() =>
+              setTab("feedback")
+            }
+            className={clsx(
+              "rounded-xl py-2 text-xs font-extrabold",
+              tab === "feedback"
+                ? "bg-white text-[#176B49]"
+                : "bg-white/10 text-white/70"
             )}
+          >
+            Feedback
+          </button>
 
-            <button
-              onClick={() =>
-                tab === "feedback"
-                  ? fetchRows({ background: true })
-                  : fetchAudit({ background: true })
-              }
-              disabled={
-                tab === "feedback"
-                  ? loading || isRefreshingFeedback
-                  : auditLoading || isRefreshingAudit
-              }
-              className={clsx(btnBase, btnPrimary)}
-            >
-              {tab === "feedback"
-                ? loading || isRefreshingFeedback
-                  ? "Refreshing..."
-                  : "Refresh"
-                : auditLoading || isRefreshingAudit
-                ? "Refreshing..."
-                : "Refresh"}
-            </button>
-
-            <button onClick={onLogout} className={clsx(btnBase, btnGhost)}>
-              Logout
-            </button>
-          </div>
-        </div>
-
-        <div className="mx-auto max-w-6xl px-6 pb-4">
-          <div className="inline-flex rounded-2xl border border-[#E5E7EB] bg-white/80 p-1 shadow-sm">
-            <button
-              onClick={() => setTab("feedback")}
-              className={clsx(
-                "rounded-xl px-4 py-2 text-sm font-extrabold transition",
-                tab === "feedback"
-                  ? "border border-[#F9A8D4]/40 bg-[#FCE7F3] text-[#BE185D]"
-                  : "text-[#6B7280] hover:text-[#1F2937]"
-              )}
-            >
-              Feedback
-            </button>
-            <button
-              onClick={() => setTab("audit")}
-              className={clsx(
-                "rounded-xl px-4 py-2 text-sm font-extrabold transition",
-                tab === "audit"
-                  ? "border border-[#F9A8D4]/40 bg-[#FCE7F3] text-[#BE185D]"
-                  : "text-[#6B7280] hover:text-[#1F2937]"
-              )}
-            >
-              Audit Trail
-            </button>
-          </div>
+          <button
+            onClick={() =>
+              setTab("audit")
+            }
+            className={clsx(
+              "rounded-xl py-2 text-xs font-extrabold",
+              tab === "audit"
+                ? "bg-white text-[#176B49]"
+                : "bg-white/10 text-white/70"
+            )}
+          >
+            Audit Trail
+          </button>
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl space-y-5 p-6">
-        {tab === "feedback" && (
-          <>
-            <SectionCard
-              title="Filters"
-              subtitle="Search and narrow down feedback quickly."
-              right={
-                <div className="hidden items-center gap-3 text-xs text-[#6B7280] md:flex">
-                  <span className="inline-flex items-center gap-2">
-                    {(loading || isRefreshingFeedback) && <InlineSpinner />}
-                    <span>Live search</span>
-                  </span>
-                  <button
-                    onClick={clearFeedbackFilters}
-                    className="font-extrabold text-[#BE185D] transition hover:text-[#831843]"
-                  >
-                    Clear filters
-                  </button>
-                </div>
-              }
-            >
-              <div className="grid gap-3 md:grid-cols-4">
-                <div className="relative">
-                  <input
-                    value={q}
-                    onChange={(e) => setQ(e.target.value)}
-                    placeholder="Search text…"
-                    className={clsx(inputBase, "w-full pr-10")}
-                  />
-                  {(loading || isRefreshingFeedback) && (
-                    <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                      <InlineSpinner />
-                    </div>
-                  )}
-                </div>
 
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as "" | "open" | "resolved")}
-                  className={inputBase}
-                >
-                  <option value="open">Open</option>
-                  <option value="resolved">Resolved</option>
-                  <option value="">All</option>
-                </select>
+      {/* =====================================================
+          MAIN
+      ====================================================== */}
 
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className={inputBase}
-                >
-                  <option value="">All categories</option>
-                  {FEEDBACK_CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+      <main className="min-h-screen lg:ml-[260px]">
+        <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
 
-                <button
-                  onClick={clearFeedbackFilters}
-                  className={clsx(btnBase, btnGhost, "py-3 md:hidden")}
-                >
-                  Clear filters
-                </button>
-              </div>
 
-              {feedbackHasFilters && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {!!q.trim() && (
-                    <button
-                      type="button"
-                      onClick={() => setQ("")}
-                      className="inline-flex items-center gap-2 rounded-full border border-[#F9A8D4]/40 bg-[#FCE7F3] px-3 py-1.5 text-xs font-extrabold text-[#BE185D] transition hover:bg-[#F9A8D4]/20"
-                    >
-                      Search: {q.trim()} <span>✕</span>
-                    </button>
-                  )}
+          {/* =================================================
+              FEEDBACK
+          ================================================== */}
 
-                  {!!status && (
-                    <button
-                      type="button"
-                      onClick={() => setStatus("")}
-                      className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-extrabold text-[#374151] transition hover:bg-[#FFF7ED]"
-                    >
-                      Status: {status} <span>✕</span>
-                    </button>
-                  )}
+          {tab === "feedback" && (
+            <div>
+              {/* header */}
+              <div className="mb-7 flex flex-col justify-between gap-5 xl:flex-row xl:items-end">
+                <div>
+                  <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[#B57A08]">
+                    <span className="h-2 w-2 rounded-full bg-[#D89A18]" />
 
-                  {!!category && (
-                    <button
-                      type="button"
-                      onClick={() => setCategory("")}
-                      className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-extrabold text-[#374151] transition hover:bg-[#FFF7ED]"
-                    >
-                      Category: {category} <span>✕</span>
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {!!err && (
-                <div className="mt-3 rounded-2xl border border-[#FCA5A5]/40 bg-[#FEE2E2] px-4 py-3 text-sm text-[#B91C1C]">
-                  <div>{err}</div>
-                  <button
-                    type="button"
-                    onClick={() => fetchRows({ background: true })}
-                    className="mt-2 font-extrabold text-[#B91C1C] underline underline-offset-2"
-                  >
-                    Retry
-                  </button>
-                </div>
-              )}
-            </SectionCard>
-
-            <SectionCard
-              title="Results"
-              subtitle={
-                status === "open"
-                  ? "Showing open feedback items."
-                  : status === "resolved"
-                  ? "Showing resolved feedback items."
-                  : "Showing all feedback items."
-              }
-              right={
-                <div className="flex items-center gap-2">
-                  {(loading || isRefreshingFeedback) && <InlineSpinner />}
-                  <Pill tone="ok">{openCount} open</Pill>
-                  <Pill>{rows.length} total</Pill>
-                </div>
-              }
-            >
-              {loading ? (
-                <div className="space-y-3">
-                  <SkeletonRow />
-                  <SkeletonRow />
-                  <SkeletonRow />
-                </div>
-              ) : rows.length === 0 ? (
-                <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFDF8] p-8 text-center">
-                  <div className="text-base font-black text-[#1F2937]">No feedback found</div>
-                  <div className="mt-1 text-sm text-[#6B7280]">
-                    {feedbackHasFilters
-                      ? "Try clearing filters or changing your search."
-                      : "No feedback entries are available yet."}
+                    Feedback management
                   </div>
+
+                  <h1 className="text-3xl font-black tracking-[-0.045em] text-[#20392E] sm:text-4xl">
+                    Feedback Inbox
+                  </h1>
+
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-[#7D8580]">
+                    Review feedback from SignSight users, track issues,
+                    and resolve submitted concerns.
+                  </p>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {rows.map((r) => {
-                    const cat = (r.category || "general").toLowerCase();
-                    const catTone =
-                      cat === "bug"
-                        ? "danger"
-                        : cat === "performance"
-                        ? "warn"
-                        : cat === "ui" || cat === "feature"
-                        ? "ok"
-                        : "neutral";
 
-                    const isPendingResolve = !!pendingResolveIds[r.id];
-
-                    return (
-                      <div
-                        key={r.id}
-                        className="rounded-3xl border border-[#E5E7EB] bg-white/85 p-4 shadow-sm transition hover:shadow-md"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <Pill tone={catTone}>{cat}</Pill>
-                              <span className="text-xs text-[#6B7280]">
-                                {new Date(r.created_at).toLocaleString()}
-                              </span>
-                              <span className="text-xs text-[#D1D5DB]">•</span>
-                              <span className="text-xs text-[#6B7280]">
-                                {r.platform ?? "-"} • {r.app_version ?? "-"} • {r.device ?? "-"}
-                              </span>
-                            </div>
-
-                            <div className="mt-2 break-words text-sm font-black text-[#1F2937]">
-                              <ExpandableText text={r.message} previewChars={190} />
-                            </div>
-
-                            <div className="mt-2 flex items-center gap-2">
-                              <Pill>{r.rating ?? "-"}</Pill>
-                              {r.resolved ? (
-                                <Pill tone="ok">{isPendingResolve ? "resolving…" : "resolved"}</Pill>
-                              ) : (
-                                <Pill tone="warn">open</Pill>
-                              )}
-                              {isPendingResolve && <Pill tone="warn">undo available</Pill>}
-                            </div>
-
-                            {(r.image_urls?.length ?? 0) > 0 && (
-                              <div className="mt-3 flex flex-wrap gap-2">
-                                {r.image_urls!.map((u) => {
-                                  const src = absoluteUrl(u);
-                                  return (
-                                    <img
-                                      key={u}
-                                      src={src}
-                                      alt="attachment"
-                                      className="h-16 w-16 cursor-pointer rounded-2xl border border-[#E5E7EB] object-cover transition hover:scale-[1.02] hover:opacity-90"
-                                      onClick={() => setImgModal({ open: true, src })}
-                                    />
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="shrink-0">
-                            {r.resolved ? (
-                              isPendingResolve ? (
-                                <button
-                                  onClick={() => undoResolve(r.id)}
-                                  className={clsx(btnBase, btnGhost)}
-                                >
-                                  Undo
-                                </button>
-                              ) : (
-                                <button
-                                  disabled
-                                  className={clsx(
-                                    btnBase,
-                                    "cursor-not-allowed border-[#E5E7EB] bg-[#F9FAFB] text-[#9CA3AF]"
-                                  )}
-                                >
-                                  Resolved
-                                </button>
-                              )
-                            ) : (
-                              <button
-                                onClick={() => markResolved(r.id)}
-                                disabled={!!pendingResolveIds[r.id]}
-                                className={clsx(btnBase, btnPrimary)}
-                              >
-                                Resolve
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </SectionCard>
-          </>
-        )}
-
-        {tab === "audit" && (
-          <>
-            <SectionCard
-              title="Create audit entry"
-              subtitle="Use this when you fixed or changed something. Optional images allowed."
-            >
-              <div className="grid gap-3 md:grid-cols-3">
-                <input
-                  value={aTitle}
-                  onChange={(e) => setATitle(e.target.value)}
-                  placeholder="Title (e.g., Fixed camera lag)"
-                  className={clsx(inputBase, "md:col-span-2")}
-                />
-
-                <select
-                  value={aCreateCategory}
-                  onChange={(e) => setACreateCategory(e.target.value)}
-                  className={inputBase}
-                >
-                  {AUDIT_CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-
-                <textarea
-                  value={aDetails}
-                  onChange={(e) => setADetails(e.target.value)}
-                  placeholder="Details (optional)…"
-                  className={clsx(inputBase, "md:col-span-3 min-h-[110px]")}
-                />
-              </div>
-
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={(e) => onPickAuditFiles(e.target.files)}
-                    className="hidden"
-                    id="auditFiles"
-                  />
-                  <label
-                    htmlFor="auditFiles"
-                    className={clsx(btnBase, btnGhost, "cursor-pointer")}
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={exportCsv}
+                    disabled={
+                      isExporting ||
+                      loading ||
+                      isRefreshingFeedback
+                    }
+                    className={clsx(
+                      btnBase,
+                      btnGhost
+                    )}
                   >
-                    Attach images (max 3)
-                  </label>
+                    {isExporting
+                      ? "Exporting..."
+                      : "Export CSV"}
+                  </button>
 
-                  <div className="text-xs text-[#6B7280]">{aFiles.length}/3 selected</div>
+                  <button
+                    onClick={() =>
+                      fetchRows({
+                        background: true,
+                      })
+                    }
+                    disabled={
+                      loading ||
+                      isRefreshingFeedback
+                    }
+                    className={clsx(
+                      btnBase,
+                      btnPrimary
+                    )}
+                  >
+                    {(loading ||
+                      isRefreshingFeedback) && (
+                      <InlineSpinner />
+                    )}
+
+                    {loading ||
+                    isRefreshingFeedback
+                      ? "Refreshing"
+                      : "Refresh"}
+                  </button>
                 </div>
-
-                <div className="flex-1" />
-
-                <button
-                  onClick={createAudit}
-                  disabled={aCreating}
-                  className={clsx(btnBase, aCreating ? btnGhost : btnPrimary)}
-                >
-                  {aCreating ? "Creating..." : "Create"}
-                </button>
               </div>
 
-              {auditPreviews.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-3">
-                  {auditPreviews.map((preview) => (
-                    <div
-                      key={preview.key}
-                      className="group relative overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-sm"
+
+              {/* statistics */}
+              <div className="grid gap-4 sm:grid-cols-3">
+                <StatCard
+                  label="Open"
+                  value={openCount}
+                  hint="Needs attention"
+                  tone="orange"
+                  icon={
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      className="h-5 w-5"
                     >
-                      <img
-                        src={preview.url}
-                        alt={preview.name}
-                        className="h-24 w-24 object-cover"
-                        onClick={() => setImgModal({ open: true, src: preview.url })}
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 8.25v4.5m0 3h.008v.008H12v-.008zM10.03 3.659L2.33 17.01A2.25 2.25 0 004.278 20.4h15.444a2.25 2.25 0 001.948-3.39L13.97 3.66a2.25 2.25 0 00-3.94 0z"
                       />
-                      <button
-                        type="button"
-                        onClick={() => removeAuditFile(preview.name)}
-                        className="absolute right-2 top-2 rounded-full border border-white/60 bg-black/55 px-2 py-1 text-[10px] font-black text-white transition hover:bg-black/70"
-                      >
-                        Remove
-                      </button>
-                      <div className="max-w-[96px] truncate px-2 py-1 text-[10px] font-bold text-[#6B7280]">
-                        {preview.name}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </SectionCard>
+                    </svg>
+                  }
+                />
 
-            <SectionCard
-              title="Filters"
-              subtitle="Search audit entries by title/details and category."
-              right={
-                <div className="hidden items-center gap-3 text-xs text-[#6B7280] md:flex">
-                  <span className="inline-flex items-center gap-2">
-                    {(auditLoading || isRefreshingAudit) && <InlineSpinner />}
-                    <span>Live search</span>
-                  </span>
-                  <button
-                    onClick={clearAuditFilters}
-                    className="font-extrabold text-[#BE185D] transition hover:text-[#831843]"
-                  >
-                    Clear filters
-                  </button>
-                </div>
-              }
-            >
-              <div className="grid gap-3 md:grid-cols-3">
-                <div className="relative">
-                  <input
-                    value={aq}
-                    onChange={(e) => setAq(e.target.value)}
-                    placeholder="Search title/details…"
-                    className={clsx(inputBase, "w-full pr-10")}
-                  />
-                  {(auditLoading || isRefreshingAudit) && (
-                    <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                      <InlineSpinner />
-                    </div>
-                  )}
-                </div>
+                <StatCard
+                  label="Resolved"
+                  value={resolvedCount}
+                  hint="Completed items"
+                  tone="green"
+                  icon={
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      className="h-5 w-5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M9 12.75l2.25 2.25L15 9.75m6-3.75c-4.5 0-7.5-1.5-9-3-1.5 1.5-4.5 3-9 3 0 7.5 3 12 9 15 6-3 9-7.5 9-15z"
+                      />
+                    </svg>
+                  }
+                />
 
-                <select
-                  value={aCategory}
-                  onChange={(e) => setACategory(e.target.value)}
-                  className={inputBase}
-                >
-                  <option value="">All categories</option>
-                  {AUDIT_CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-
-                <button
-                  onClick={clearAuditFilters}
-                  className={clsx(btnBase, btnGhost, "py-3 md:hidden")}
-                >
-                  Clear filters
-                </button>
+                <StatCard
+                  label="Showing"
+                  value={rows.length}
+                  hint="Current results"
+                  tone="neutral"
+                  icon={feedbackIcon}
+                />
               </div>
 
-              {auditHasFilters && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {!!aq.trim() && (
-                    <button
-                      type="button"
-                      onClick={() => setAq("")}
-                      className="inline-flex items-center gap-2 rounded-full border border-[#F9A8D4]/40 bg-[#FCE7F3] px-3 py-1.5 text-xs font-extrabold text-[#BE185D] transition hover:bg-[#F9A8D4]/20"
-                    >
-                      Search: {aq.trim()} <span>✕</span>
-                    </button>
-                  )}
 
-                  {!!aCategory && (
-                    <button
-                      type="button"
-                      onClick={() => setACategory("")}
-                      className="inline-flex items-center gap-2 rounded-full border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs font-extrabold text-[#374151] transition hover:bg-[#FFF7ED]"
-                    >
-                      Category: {aCategory} <span>✕</span>
-                    </button>
-                  )}
-                </div>
-              )}
+              {/* filter toolbar */}
+              <div className="mt-6 rounded-[22px] border border-[#E1E3DC] bg-white p-3 shadow-[0_6px_26px_rgba(33,56,45,0.04)]">
+                <div className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_180px_190px_auto]">
 
-              {!!auditErr && (
-                <div className="mt-3 rounded-2xl border border-[#FCA5A5]/40 bg-[#FEE2E2] px-4 py-3 text-sm text-[#B91C1C]">
-                  <div>{auditErr}</div>
+                  <div className="relative">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#949B96]"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="m21 21-4.35-4.35m1.1-5.4a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"
+                      />
+                    </svg>
+
+                    <input
+                      value={q}
+                      onChange={(e) =>
+                        setQ(e.target.value)
+                      }
+                      placeholder="Search feedback..."
+                      className={clsx(
+                        inputBase,
+                        "pl-11"
+                      )}
+                    />
+
+                    {(loading ||
+                      isRefreshingFeedback) && (
+                      <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2">
+                        <InlineSpinner />
+                      </div>
+                    )}
+                  </div>
+
+
+                  <select
+                    value={status}
+                    onChange={(e) =>
+                      setStatus(
+                        e.target.value as
+                          | ""
+                          | "open"
+                          | "resolved"
+                      )
+                    }
+                    className={inputBase}
+                  >
+                    <option value="open">
+                      Open
+                    </option>
+
+                    <option value="resolved">
+                      Resolved
+                    </option>
+
+                    <option value="">
+                      All statuses
+                    </option>
+                  </select>
+
+
+                  <select
+                    value={category}
+                    onChange={(e) =>
+                      setCategory(
+                        e.target.value
+                      )
+                    }
+                    className={inputBase}
+                  >
+                    <option value="">
+                      All categories
+                    </option>
+
+                    {FEEDBACK_CATEGORIES.map(
+                      (cat) => (
+                        <option
+                          key={cat}
+                          value={cat}
+                        >
+                          {cat}
+                        </option>
+                      )
+                    )}
+                  </select>
+
+
                   <button
-                    type="button"
-                    onClick={() => fetchAudit({ background: true })}
-                    className="mt-2 font-extrabold text-[#B91C1C] underline underline-offset-2"
+                    onClick={
+                      clearFeedbackFilters
+                    }
+                    className={clsx(
+                      btnBase,
+                      btnGhost
+                    )}
+                  >
+                    Clear
+                  </button>
+                </div>
+
+
+                {feedbackHasFilters && (
+                  <div className="mt-3 flex flex-wrap gap-2 px-1 pb-1">
+                    {!!q.trim() && (
+                      <button
+                        onClick={() =>
+                          setQ("")
+                        }
+                        className="rounded-full border border-[#CFE2D6] bg-[#EFF8F3] px-3 py-1.5 text-xs font-extrabold text-[#176B49]"
+                      >
+                        Search: {q.trim()} ×
+                      </button>
+                    )}
+
+                    {status !== "open" && (
+                      <button
+                        onClick={() =>
+                          setStatus("open")
+                        }
+                        className="rounded-full border border-[#E2E3DD] bg-[#F7F8F4] px-3 py-1.5 text-xs font-extrabold text-[#616B65]"
+                      >
+                        Status:{" "}
+                        {status || "all"} ×
+                      </button>
+                    )}
+
+                    {!!category && (
+                      <button
+                        onClick={() =>
+                          setCategory("")
+                        }
+                        className="rounded-full border border-[#F0DCA7] bg-[#FFF8E6] px-3 py-1.5 text-xs font-extrabold text-[#A97409]"
+                      >
+                        Category:{" "}
+                        {category} ×
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+
+              {/* error */}
+              {!!err && (
+                <div className="mt-4 flex items-center justify-between gap-4 rounded-[18px] border border-[#EDB7AE] bg-[#FFF0ED] px-4 py-3 text-sm text-[#A84A3D]">
+                  <span>{err}</span>
+
+                  <button
+                    onClick={() =>
+                      fetchRows({
+                        background: true,
+                      })
+                    }
+                    className="shrink-0 font-black underline"
                   >
                     Retry
                   </button>
                 </div>
               )}
-            </SectionCard>
 
-            <SectionCard
-              title="Audit entries"
-              subtitle="Newest first."
-              right={
-                <div className="flex items-center gap-2">
-                  {(auditLoading || isRefreshingAudit) && <InlineSpinner />}
-                  <Pill>{auditRows.length} total</Pill>
-                </div>
-              }
-            >
-              {auditLoading ? (
-                <div className="space-y-3">
-                  <SkeletonRow />
-                  <SkeletonRow />
-                  <SkeletonRow />
-                </div>
-              ) : auditRows.length === 0 ? (
-                <div className="rounded-2xl border border-[#E5E7EB] bg-[#FFFDF8] p-8 text-center">
-                  <div className="text-base font-black text-[#1F2937]">No audit entries yet</div>
-                  <div className="mt-1 text-sm text-[#6B7280]">
-                    {auditHasFilters
-                      ? "Try clearing filters or changing your search."
-                      : "Create one above to start logging changes."}
+
+              {/* inbox */}
+              <div className="mt-7">
+                <div className="mb-4 flex items-end justify-between gap-4">
+                  <div>
+                    <h2 className="text-lg font-black text-[#263B31]">
+                      Inbox
+                    </h2>
+
+                    <p className="mt-1 text-xs text-[#8A918D]">
+                      {status === "open"
+                        ? "Showing open feedback."
+                        : status ===
+                            "resolved"
+                          ? "Showing resolved feedback."
+                          : "Showing all feedback."}
+                    </p>
                   </div>
+
+                  <Pill>
+                    {rows.length} results
+                  </Pill>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {auditRows.map((a) => (
-                    <div
-                      key={a.id}
-                      className="rounded-3xl border border-[#E5E7EB] bg-white/85 p-4 shadow-sm transition hover:shadow-md"
+
+
+                {loading ? (
+                  <div className="space-y-3">
+                    <SkeletonRow />
+                    <SkeletonRow />
+                    <SkeletonRow />
+                  </div>
+                ) : rows.length === 0 ? (
+                  <div className="rounded-[26px] border border-dashed border-[#D6DAD4] bg-white/65 px-6 py-16 text-center">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[20px] bg-[#EDF4F0] text-[#176B49]">
+                      {feedbackIcon}
+                    </div>
+
+                    <h3 className="mt-4 font-black text-[#263B31]">
+                      No feedback found
+                    </h3>
+
+                    <p className="mt-1 text-sm text-[#8A918D]">
+                      {feedbackHasFilters
+                        ? "Try changing or clearing your filters."
+                        : "There are no feedback entries yet."}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {rows.map((row) => {
+                      const cat = (
+                        row.category ||
+                        "general"
+                      ).toLowerCase();
+
+                      const catTone =
+                        cat === "bug"
+                          ? "danger"
+                          : cat ===
+                              "performance"
+                            ? "warn"
+                            : cat === "ui" ||
+                                cat ===
+                                  "feature"
+                              ? "ok"
+                              : "neutral";
+
+                      const isPending =
+                        !!pendingResolveIds[
+                          row.id
+                        ];
+
+                      return (
+                        <article
+                          key={row.id}
+                          className={clsx(
+                            "group overflow-hidden rounded-[24px] border bg-white transition hover:border-[#CAD7D0] hover:shadow-[0_12px_32px_rgba(35,55,46,0.07)]",
+                            row.resolved
+                              ? "border-[#DDE5E0]"
+                              : "border-[#E5E1D5]"
+                          )}
+                        >
+                          <div className="flex">
+                            <div
+                              className={clsx(
+                                "w-1.5 shrink-0",
+                                row.resolved
+                                  ? "bg-[#176B49]"
+                                  : "bg-[#D89A18]"
+                              )}
+                            />
+
+                            <div className="min-w-0 flex-1 p-5">
+                              <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <Pill
+                                      tone={
+                                        catTone
+                                      }
+                                    >
+                                      {cat}
+                                    </Pill>
+
+                                    {row.resolved ? (
+                                      <Pill tone="ok">
+                                        {isPending
+                                          ? "Resolving..."
+                                          : "Resolved"}
+                                      </Pill>
+                                    ) : (
+                                      <Pill tone="warn">
+                                        Open
+                                      </Pill>
+                                    )}
+
+                                    {isPending && (
+                                      <Pill tone="warn">
+                                        Undo available
+                                      </Pill>
+                                    )}
+                                  </div>
+
+
+                                  <div className="mt-4 text-[15px] font-bold leading-6 text-[#26382F]">
+                                    <ExpandableText
+                                      text={
+                                        row.message
+                                      }
+                                      previewChars={
+                                        220
+                                      }
+                                    />
+                                  </div>
+
+
+                                  <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[#8A918D]">
+                                    <span>
+                                      {new Date(
+                                        row.created_at
+                                      ).toLocaleString()}
+                                    </span>
+
+                                    <span className="h-1 w-1 rounded-full bg-[#CDD0CB]" />
+
+                                    <span>
+                                      {row.platform ||
+                                        "Unknown platform"}
+                                    </span>
+
+                                    <span>
+                                      {row.app_version
+                                        ? `v${row.app_version}`
+                                        : "No version"}
+                                    </span>
+
+                                    <span>
+                                      {row.device ||
+                                        "Unknown device"}
+                                    </span>
+                                  </div>
+
+
+                                  <div className="mt-4 flex items-center gap-2 text-xs">
+                                    <span className="font-semibold text-[#838B86]">
+                                      Rating
+                                    </span>
+
+                                    <span className="font-black text-[#B57A08]">
+                                      {row.rating ??
+                                        "—"}
+                                      /5
+                                    </span>
+                                  </div>
+
+
+                                  {(row
+                                    .image_urls
+                                    ?.length ??
+                                    0) >
+                                    0 && (
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                      {row.image_urls!.map(
+                                        (url) => {
+                                          const src =
+                                            absoluteUrl(
+                                              url
+                                            );
+
+                                          return (
+                                            <button
+                                              key={
+                                                url
+                                              }
+                                              type="button"
+                                              onClick={() =>
+                                                setImgModal(
+                                                  {
+                                                    open: true,
+                                                    src,
+                                                  }
+                                                )
+                                              }
+                                              className="overflow-hidden rounded-[14px] border border-[#DDE0DA] bg-[#F7F7F3]"
+                                            >
+                                              <img
+                                                src={
+                                                  src
+                                                }
+                                                alt="Feedback attachment"
+                                                className="h-20 w-20 object-cover transition duration-200 hover:scale-105"
+                                              />
+                                            </button>
+                                          );
+                                        }
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+
+
+                                <div className="shrink-0">
+                                  {row.resolved ? (
+                                    isPending ? (
+                                      <button
+                                        onClick={() =>
+                                          undoResolve(
+                                            row.id
+                                          )
+                                        }
+                                        className={clsx(
+                                          btnBase,
+                                          btnGhost
+                                        )}
+                                      >
+                                        Undo
+                                      </button>
+                                    ) : (
+                                      <div className="inline-flex items-center gap-2 rounded-[14px] bg-[#EFF7F2] px-4 py-2.5 text-xs font-extrabold text-[#176B49]">
+                                        ✓ Resolved
+                                      </div>
+                                    )
+                                  ) : (
+                                    <button
+                                      onClick={() =>
+                                        markResolved(
+                                          row.id
+                                        )
+                                      }
+                                      disabled={
+                                        !!pendingResolveIds[
+                                          row.id
+                                        ]
+                                      }
+                                      className={clsx(
+                                        btnBase,
+                                        btnPrimary
+                                      )}
+                                    >
+                                      Resolve
+                                      <span>
+                                        →
+                                      </span>
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+
+          {/* =================================================
+              AUDIT TRAIL
+          ================================================== */}
+
+          {tab === "audit" && (
+            <div>
+              {/* header */}
+              <div className="mb-7 flex flex-col justify-between gap-5 xl:flex-row xl:items-end">
+                <div>
+                  <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[#B57A08]">
+                    <span className="h-2 w-2 rounded-full bg-[#D89A18]" />
+
+                    Administration record
+                  </div>
+
+                  <h1 className="text-3xl font-black tracking-[-0.045em] text-[#20392E] sm:text-4xl">
+                    Audit Trail
+                  </h1>
+
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-[#7D8580]">
+                    Document changes, fixes,
+                    administrative actions, and
+                    important SignSight updates.
+                  </p>
+                </div>
+
+                <button
+                  onClick={() =>
+                    fetchAudit({
+                      background: true,
+                    })
+                  }
+                  disabled={
+                    auditLoading ||
+                    isRefreshingAudit
+                  }
+                  className={clsx(
+                    btnBase,
+                    btnPrimary
+                  )}
+                >
+                  {(auditLoading ||
+                    isRefreshingAudit) && (
+                    <InlineSpinner />
+                  )}
+
+                  {auditLoading ||
+                  isRefreshingAudit
+                    ? "Refreshing"
+                    : "Refresh"}
+                </button>
+              </div>
+
+
+              <div className="grid items-start gap-6 xl:grid-cols-[390px_minmax(0,1fr)]">
+
+
+                {/* CREATE PANEL */}
+                <aside className="rounded-[26px] border border-[#DDE1DA] bg-white p-5 shadow-[0_8px_30px_rgba(34,54,45,0.045)] xl:sticky xl:top-6">
+
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-[15px] bg-[#FFF3D3] text-[#B27808]">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        className="h-5 w-5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 4.5v15m7.5-7.5h-15"
+                        />
+                      </svg>
+                    </div>
+
+                    <div>
+                      <h2 className="font-black text-[#273B31]">
+                        New audit entry
+                      </h2>
+
+                      <p className="mt-0.5 text-xs text-[#8B928E]">
+                        Record an admin action
+                      </p>
+                    </div>
+                  </div>
+
+
+                  <div className="mt-6 space-y-4">
+                    <div>
+                      <label className="mb-2 block text-xs font-extrabold text-[#536159]">
+                        Title
+                      </label>
+
+                      <input
+                        value={aTitle}
+                        onChange={(e) =>
+                          setATitle(
+                            e.target.value
+                          )
+                        }
+                        placeholder="e.g. Fixed camera lag"
+                        className={
+                          inputBase
+                        }
+                      />
+                    </div>
+
+
+                    <div>
+                      <label className="mb-2 block text-xs font-extrabold text-[#536159]">
+                        Category
+                      </label>
+
+                      <select
+                        value={
+                          aCreateCategory
+                        }
+                        onChange={(e) =>
+                          setACreateCategory(
+                            e.target.value
+                          )
+                        }
+                        className={
+                          inputBase
+                        }
+                      >
+                        {AUDIT_CATEGORIES.map(
+                          (cat) => (
+                            <option
+                              key={cat}
+                              value={cat}
+                            >
+                              {cat}
+                            </option>
+                          )
+                        )}
+                      </select>
+                    </div>
+
+
+                    <div>
+                      <label className="mb-2 block text-xs font-extrabold text-[#536159]">
+                        Details
+                      </label>
+
+                      <textarea
+                        value={aDetails}
+                        onChange={(e) =>
+                          setADetails(
+                            e.target.value
+                          )
+                        }
+                        placeholder="Describe what was changed..."
+                        className={clsx(
+                          inputBase,
+                          "min-h-[130px] resize-y"
+                        )}
+                      />
+                    </div>
+
+
+                    <div>
+                      <label className="mb-2 block text-xs font-extrabold text-[#536159]">
+                        Attachments
+                      </label>
+
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) =>
+                          onPickAuditFiles(
+                            e.target.files
+                          )
+                        }
+                        className="hidden"
+                        id="auditFiles"
+                      />
+
+                      <label
+                        htmlFor="auditFiles"
+                        className="flex cursor-pointer items-center justify-center gap-2 rounded-[16px] border border-dashed border-[#C9CFC9] bg-[#F8F9F5] px-4 py-4 text-xs font-extrabold text-[#637069] transition hover:border-[#176B49] hover:bg-[#F0F7F3] hover:text-[#176B49]"
+                      >
+                        <span className="text-lg">
+                          +
+                        </span>
+
+                        Add images
+
+                        <span className="font-medium text-[#9AA09C]">
+                          ({aFiles.length}/3)
+                        </span>
+                      </label>
+                    </div>
+
+
+                    {auditPreviews.length >
+                      0 && (
+                      <div className="grid grid-cols-3 gap-2">
+                        {auditPreviews.map(
+                          (preview) => (
+                            <div
+                              key={
+                                preview.key
+                              }
+                              className="group relative aspect-square overflow-hidden rounded-[14px] border border-[#DDE0DA]"
+                            >
+                              <img
+                                src={
+                                  preview.url
+                                }
+                                alt={
+                                  preview.name
+                                }
+                                className="h-full w-full cursor-pointer object-cover"
+                                onClick={() =>
+                                  setImgModal(
+                                    {
+                                      open: true,
+                                      src: preview.url,
+                                    }
+                                  )
+                                }
+                              />
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  removeAuditFile(
+                                    preview.name
+                                  )
+                                }
+                                className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-[10px] font-black text-white opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    )}
+
+
+                    <button
+                      onClick={createAudit}
+                      disabled={aCreating}
+                      className={clsx(
+                        btnBase,
+                        btnOrange,
+                        "w-full py-3"
+                      )}
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Pill tone="ok">{(a.category || "other").toString()}</Pill>
-                            <span className="text-xs text-[#6B7280]">
-                              {new Date(a.created_at).toLocaleString()}
-                            </span>
-                          </div>
+                      {aCreating ? (
+                        <>
+                          <InlineSpinner />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          Create audit entry
+                          <span>→</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </aside>
 
-                          <div className="mt-2 text-sm font-black text-[#1F2937]">
-                            <ExpandableText text={a.title} previewChars={110} />
-                          </div>
 
-                          {!!a.details && (
-                            <div className="mt-1 break-words whitespace-pre-wrap text-sm text-[#6B7280]">
-                              <ExpandableText text={a.details} previewChars={220} />
-                            </div>
+                {/* TIMELINE */}
+                <section>
+                  {/* filters */}
+                  <div className="rounded-[22px] border border-[#E1E3DC] bg-white p-3">
+                    <div className="grid gap-3 md:grid-cols-[1fr_190px_auto]">
+
+                      <div className="relative">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#949B96]"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="m21 21-4.35-4.35m1.1-5.4a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"
+                          />
+                        </svg>
+
+                        <input
+                          value={aq}
+                          onChange={(e) =>
+                            setAq(
+                              e.target.value
+                            )
+                          }
+                          placeholder="Search audit trail..."
+                          className={clsx(
+                            inputBase,
+                            "pl-11"
                           )}
+                        />
 
-                          {(a.image_urls?.length ?? 0) > 0 && (
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              {a.image_urls!.map((u) => {
-                                const src = absoluteUrl(u);
-                                return (
-                                  <img
-                                    key={u}
-                                    src={src}
-                                    alt="attachment"
-                                    className="h-16 w-16 cursor-pointer rounded-2xl border border-[#E5E7EB] object-cover transition hover:scale-[1.02] hover:opacity-90"
-                                    onClick={() => setImgModal({ open: true, src })}
-                                  />
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
+                        {(auditLoading ||
+                          isRefreshingAudit) && (
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                            <InlineSpinner />
+                          </div>
+                        )}
+                      </div>
+
+
+                      <select
+                        value={aCategory}
+                        onChange={(e) =>
+                          setACategory(
+                            e.target.value
+                          )
+                        }
+                        className={
+                          inputBase
+                        }
+                      >
+                        <option value="">
+                          All categories
+                        </option>
+
+                        {AUDIT_CATEGORIES.map(
+                          (cat) => (
+                            <option
+                              key={cat}
+                              value={cat}
+                            >
+                              {cat}
+                            </option>
+                          )
+                        )}
+                      </select>
+
+
+                      <button
+                        onClick={
+                          clearAuditFilters
+                        }
+                        className={clsx(
+                          btnBase,
+                          btnGhost
+                        )}
+                      >
+                        Clear
+                      </button>
+                    </div>
+
+
+                    {auditHasFilters && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {!!aq.trim() && (
+                          <button
+                            onClick={() =>
+                              setAq("")
+                            }
+                            className="rounded-full border border-[#CCE0D4] bg-[#EFF8F3] px-3 py-1.5 text-xs font-extrabold text-[#176B49]"
+                          >
+                            Search:{" "}
+                            {aq.trim()} ×
+                          </button>
+                        )}
+
+                        {!!aCategory && (
+                          <button
+                            onClick={() =>
+                              setACategory(
+                                ""
+                              )
+                            }
+                            className="rounded-full border border-[#F0DCA7] bg-[#FFF8E6] px-3 py-1.5 text-xs font-extrabold text-[#A97409]"
+                          >
+                            Category:{" "}
+                            {aCategory} ×
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+
+                  {!!auditErr && (
+                    <div className="mt-4 flex items-center justify-between rounded-[18px] border border-[#EDB7AE] bg-[#FFF0ED] px-4 py-3 text-sm text-[#A84A3D]">
+                      <span>
+                        {auditErr}
+                      </span>
+
+                      <button
+                        onClick={() =>
+                          fetchAudit({
+                            background:
+                              true,
+                          })
+                        }
+                        className="font-black underline"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  )}
+
+
+                  <div className="mb-5 mt-7 flex items-end justify-between">
+                    <div>
+                      <h2 className="text-lg font-black text-[#273B31]">
+                        Activity
+                      </h2>
+
+                      <p className="mt-1 text-xs text-[#8A918D]">
+                        Newest activity first
+                      </p>
+                    </div>
+
+                    <Pill>
+                      {auditRows.length} entries
+                    </Pill>
+                  </div>
+
+
+                  {auditLoading ? (
+                    <div className="space-y-3">
+                      <SkeletonRow />
+                      <SkeletonRow />
+                      <SkeletonRow />
+                    </div>
+                  ) : auditRows.length ===
+                    0 ? (
+                    <div className="rounded-[26px] border border-dashed border-[#D6DAD4] bg-white/65 px-6 py-16 text-center">
+                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[20px] bg-[#FFF3D3] text-[#B27808]">
+                        {auditIcon}
+                      </div>
+
+                      <h3 className="mt-4 font-black text-[#263B31]">
+                        No audit entries
+                      </h3>
+
+                      <p className="mt-1 text-sm text-[#8A918D]">
+                        {auditHasFilters
+                          ? "Try clearing or changing your filters."
+                          : "Create an audit entry to begin tracking changes."}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="relative">
+
+                      {/* timeline line */}
+                      <div className="absolute bottom-8 left-[17px] top-7 hidden w-px bg-[#D8DED9] sm:block" />
+
+
+                      <div className="space-y-4">
+                        {auditRows.map(
+                          (audit) => {
+                            const auditCategory =
+                              (
+                                audit.category ||
+                                "other"
+                              ).toString();
+
+                            return (
+                              <article
+                                key={
+                                  audit.id
+                                }
+                                className="relative sm:pl-12"
+                              >
+                                {/* timeline node */}
+                                <div className="absolute left-[8px] top-6 z-10 hidden h-[19px] w-[19px] rounded-full border-[5px] border-[#F5F4EE] bg-[#D89A18] shadow-[0_0_0_1px_#D8C182] sm:block" />
+
+
+                                <div className="rounded-[24px] border border-[#E0E3DC] bg-white p-5 transition hover:border-[#CFD6D1] hover:shadow-[0_12px_35px_rgba(35,55,46,0.06)]">
+
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <Pill tone="ok">
+                                      {
+                                        auditCategory
+                                      }
+                                    </Pill>
+
+                                    <span className="text-xs text-[#929994]">
+                                      {new Date(
+                                        audit.created_at
+                                      ).toLocaleString()}
+                                    </span>
+                                  </div>
+
+
+                                  <div className="mt-3 text-base font-black leading-6 text-[#26382F]">
+                                    <ExpandableText
+                                      text={
+                                        audit.title
+                                      }
+                                      previewChars={
+                                        130
+                                      }
+                                    />
+                                  </div>
+
+
+                                  {!!audit.details && (
+                                    <div className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#707A74]">
+                                      <ExpandableText
+                                        text={
+                                          audit.details
+                                        }
+                                        previewChars={
+                                          260
+                                        }
+                                      />
+                                    </div>
+                                  )}
+
+
+                                  {(audit
+                                    .image_urls
+                                    ?.length ??
+                                    0) >
+                                    0 && (
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                      {audit.image_urls!.map(
+                                        (url) => {
+                                          const src =
+                                            absoluteUrl(
+                                              url
+                                            );
+
+                                          return (
+                                            <button
+                                              key={
+                                                url
+                                              }
+                                              type="button"
+                                              onClick={() =>
+                                                setImgModal(
+                                                  {
+                                                    open: true,
+                                                    src,
+                                                  }
+                                                )
+                                              }
+                                              className="overflow-hidden rounded-[14px] border border-[#DDE0DA]"
+                                            >
+                                              <img
+                                                src={
+                                                  src
+                                                }
+                                                alt="Audit attachment"
+                                                className="h-20 w-20 object-cover transition hover:scale-105"
+                                              />
+                                            </button>
+                                          );
+                                        }
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </article>
+                            );
+                          }
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </SectionCard>
-          </>
-        )}
+                  )}
+                </section>
+              </div>
+            </div>
+          )}
 
-        <div className="pb-10 text-center text-xs text-[#6B7280]">
-          SignSight Admin • Powered by FastAPI + MongoDB
+
+          {/* footer */}
+          <footer className="mt-12 border-t border-[#DFE2DB] py-6 text-center text-[11px] font-medium text-[#989F9A]">
+            SignSight Administration
+          </footer>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
