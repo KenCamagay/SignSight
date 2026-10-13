@@ -7,7 +7,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import AuthScreen from "../../features/auth/screens/AuthScreen";
 import DashboardHomeScreen from "../../features/dashboard/screens/DashboardHomeScreen";
-import LabDeveloperScreen from "../../features/lab/screens/LabDeveloperScreen";
+import DeveloperLabAccessScreen from "../../features/auth/screens/DeveloperLabAccessScreen";
 import SettingsRootScreen from "../../features/settings/screens/SettingsRootScreen";
 import TranslatorScreen from "../../features/translator/screens/TranslatorScreen";
 import FeedbackScreen from "../../screens/FeedbackScreen";
@@ -75,7 +75,7 @@ function MainAppStack() {
     <AppStack.Navigator id="main-app-stack" screenOptions={{ headerShown: false }}>
       <AppStack.Screen name="Tabs" component={MainTabs} />
       <AppStack.Screen name="Translator" component={TranslatorScreen} />
-      <AppStack.Screen name="Lab" component={LabDeveloperScreen} />
+      <AppStack.Screen name="Lab" component={DeveloperLabAccessScreen} />
     </AppStack.Navigator>
   );
 }

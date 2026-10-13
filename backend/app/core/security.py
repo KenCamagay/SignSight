@@ -9,6 +9,7 @@ from app.core.config import settings
 def create_admin_token() -> str:
     payload = {
         "sub": "admin",
+        "role": "admin",
         "iat": datetime.utcnow(),
         "exp": datetime.utcnow() + timedelta(hours=12),
     }
@@ -19,12 +20,15 @@ def verify_admin_credentials(username: str, password: str) -> bool:
     return username == settings.admin_user and password == settings.admin_pass
 
 
-def require_admin(authorization: str | None = Header(None)) -> None:
+def require_admin(authorization: str | None = Header(None)) -> str:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing token")
 
     token = authorization.split(" ", 1)[1]
     try:
-        jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_alg])
+        payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_alg])
     except JWTError as exc:
         raise HTTPException(status_code=401, detail="Invalid/expired token") from exc
+    if payload.get("sub") != "admin" or payload.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return "admin"

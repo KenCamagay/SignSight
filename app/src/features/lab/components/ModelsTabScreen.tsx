@@ -13,6 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { API_BASE } from "../../../config/api";
+import { fetchWithAdminAuth } from "../../../config/adminSession";
 
 import {
   ACCENT,
@@ -291,7 +292,7 @@ export function ModelsTabScreen({
     try {
       setGestureTrainingState("running");
       setGestureMessage("Training gesture model...");
-      const response = await fetch(`${API_BASE}/train_gestures`, {
+      const response = await fetchWithAdminAuth(`${API_BASE}/train_gestures`, {
         method: "POST",
       });
       const payload = await response.json().catch(() => null);

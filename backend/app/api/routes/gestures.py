@@ -1,4 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+
+from app.core.security import require_admin
 
 from app.schemas.ml import GestureLabelSummaryReq, PredictGestureReq, UploadGestureReq
 from app.services.gesture_classifier import (
@@ -12,7 +14,7 @@ from app.services.gesture_classifier import (
 router = APIRouter()
 
 
-@router.post("/upload_gesture")
+@router.post("/upload_gesture", dependencies=[Depends(require_admin)])
 def upload_gesture_route(req: UploadGestureReq):
     return upload_gesture(
         req.label,
@@ -32,7 +34,7 @@ def upload_gesture_route(req: UploadGestureReq):
     )
 
 
-@router.post("/train_gestures")
+@router.post("/train_gestures", dependencies=[Depends(require_admin)])
 def train_gestures():
     return train_gesture_model()
 

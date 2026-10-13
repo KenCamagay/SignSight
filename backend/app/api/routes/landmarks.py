@@ -1,4 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+
+from app.core.security import require_admin
 
 from app.schemas.ml import (
     ActivateLandmarkModelReq,
@@ -24,7 +26,7 @@ from app.services.landmark_classifier import (
 router = APIRouter()
 
 
-@router.post("/upload_landmarks")
+@router.post("/upload_landmarks", dependencies=[Depends(require_admin)])
 def upload_landmarks_route(req: UploadLandmarksReq):
     return upload_landmarks(
         req.label,
@@ -43,12 +45,12 @@ def upload_landmarks_route(req: UploadLandmarksReq):
     )
 
 
-@router.post("/train_landmarks")
+@router.post("/train_landmarks", dependencies=[Depends(require_admin)])
 def train_landmarks(req: TrainLandmarksReq):
     return train_landmarks_model(req.trainingMode, label=req.label, note=req.note)
 
 
-@router.post("/upload_static_word_landmarks")
+@router.post("/upload_static_word_landmarks", dependencies=[Depends(require_admin)])
 def upload_static_word_landmarks_route(req: UploadLandmarksReq):
     return upload_static_word_landmark(
         req.label,
@@ -67,17 +69,17 @@ def upload_static_word_landmarks_route(req: UploadLandmarksReq):
     )
 
 
-@router.post("/activate_landmark_model")
+@router.post("/activate_landmark_model", dependencies=[Depends(require_admin)])
 def activate_landmark_model(req: ActivateLandmarkModelReq):
     return activate_landmark_model_version(req.versionId)
 
 
-@router.post("/rename_landmark_model")
+@router.post("/rename_landmark_model", dependencies=[Depends(require_admin)])
 def rename_landmark_model(req: RenameLandmarkModelReq):
     return rename_landmark_model_version(req.versionId, req.label)
 
 
-@router.post("/archive_landmark_model")
+@router.post("/archive_landmark_model", dependencies=[Depends(require_admin)])
 def archive_landmark_model(req: ArchiveLandmarkModelReq):
     return archive_landmark_model_version(req.versionId)
 

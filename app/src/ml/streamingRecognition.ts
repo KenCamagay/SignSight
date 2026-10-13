@@ -1,5 +1,6 @@
 import type { MutableRefObject } from "react";
 import { Platform } from "react-native";
+import { fetchWithAdminAuth } from "../config/adminSession";
 
 import { MajorityVoteSmoother } from "./smoother";
 import type {
@@ -148,7 +149,7 @@ export async function saveStreamingLandmarkSample(
     return { ok: false, error: "No hand detected (cannot save)" };
   }
 
-  const res = await fetch(`${apiBase}/upload_landmarks`, {
+  const res = await fetchWithAdminAuth(`${apiBase}/upload_landmarks`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -196,7 +197,7 @@ export async function saveStreamingStaticWordLandmarkSample(
     return { ok: false, error: "No hand detected (cannot save)" };
   }
 
-  const res = await fetch(`${apiBase}/upload_static_word_landmarks`, {
+  const res = await fetchWithAdminAuth(`${apiBase}/upload_static_word_landmarks`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -250,7 +251,7 @@ export async function saveStreamingGestureSample(
     return { ok: false, error: "Not enough gesture frames recorded yet." };
   }
 
-  const res = await fetch(`${apiBase}/upload_gesture`, {
+  const res = await fetchWithAdminAuth(`${apiBase}/upload_gesture`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

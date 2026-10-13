@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Platform, StatusBar, useWindowDimensions } from "react-native";
 
 import { API_BASE } from "../../config/api";
+import { fetchWithAdminAuth } from "../../config/adminSession";
 import { CameraShell } from "../../modules/camera/components/CameraShell";
 import { TranslatorOverlay } from "../../modules/camera/components/TranslatorOverlay";
 import { useCameraRuntime } from "../../modules/camera/hooks/useCameraRuntime";
@@ -156,7 +157,7 @@ export default function CameraExperience({
 
     try {
       setModelStatusMessage("Switching model...");
-      const response = await fetch(`${API_BASE}/activate_landmark_model`, {
+      const response = await fetchWithAdminAuth(`${API_BASE}/activate_landmark_model`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ versionId: model.versionId }),

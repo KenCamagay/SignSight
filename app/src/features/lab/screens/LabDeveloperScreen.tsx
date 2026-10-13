@@ -7,6 +7,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useAppSettings } from "../../../app/providers/AppSettingsProvider";
 import { PRIMARY_CONTAINER, PRIMARY_CONTAINER_CAPTURE_ICON } from "../../../components/lab/shared/labColors";
 import { API_BASE } from "../../../config/api";
+import { fetchWithAdminAuth } from "../../../config/adminSession";
 import { BG } from "../../../components/lab/shared/labColors";
 import { ASL_LABELS } from "../../../ml/labels";
 import {
@@ -821,7 +822,7 @@ export default function LabDeveloperScreen() {
 
     try {
       setModelsError(null);
-      const response = await fetch(`${API_BASE}/activate_landmark_model`, {
+      const response = await fetchWithAdminAuth(`${API_BASE}/activate_landmark_model`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ versionId }),
@@ -850,7 +851,7 @@ export default function LabDeveloperScreen() {
       setTrainingState("running");
       setTrainingMessage("Training new landmark model...");
       setModelsError(null);
-      const response = await fetch(`${API_BASE}/train_landmarks`, {
+      const response = await fetchWithAdminAuth(`${API_BASE}/train_landmarks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -899,7 +900,7 @@ export default function LabDeveloperScreen() {
     try {
       setRenamingModelId(modelId);
       setModelsError(null);
-      const response = await fetch(`${API_BASE}/rename_landmark_model`, {
+      const response = await fetchWithAdminAuth(`${API_BASE}/rename_landmark_model`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ versionId: model.versionId, label: nextLabel.trim() }),
@@ -928,7 +929,7 @@ export default function LabDeveloperScreen() {
     try {
       setArchivingModelId(modelId);
       setModelsError(null);
-      const response = await fetch(`${API_BASE}/archive_landmark_model`, {
+      const response = await fetchWithAdminAuth(`${API_BASE}/archive_landmark_model`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ versionId: model.versionId }),
